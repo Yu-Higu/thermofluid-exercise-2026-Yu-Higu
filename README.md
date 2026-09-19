@@ -2,7 +2,7 @@
 
 数式・実装・テストを対応させ、数値結果と限界を説明するための個人課題リポジトリです。
 
-<!-- contract-section: assigned_repository -->
+<!-- contract-section: student_created_repository -->
 ## 初回の準備
 
 - Julia 1.13.0
@@ -16,7 +16,7 @@ Windows では，演習に必要な Julia，Git，SSH，VS Code，Julia 拡張�
 WSL2 の学生リポジトリは /home/<user>/... に SSH で複製し，Windows の VS Code は Remote - WSL でそのLinux側フォルダーを開いてください．/mnt/c/... 上の実行も対応しません．
 macOS と native Linux は，それぞれのOS側の Julia，Git，SSH，VS Code，エージェントを使う構成を対応します．
 
-招待を受諾し、WSL2では /home/<user>/... の下へ割り当てられた自分の学生リポジトリをSSHで複製します。
+[公開テンプレート](https://github.com/t2lab-it/thermofluid-exercise-student-2026)の `Use this template` → `Create a new repository` から、学生自身のアカウントをOwnerにして `thermofluid-exercise-2026-<自分のusername>` を作成します。作成した自分のリポジトリをSSHでcloneしてください。WSL2では /home/<user>/... の下に置きます。
 [環境診断](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/F00.html)と
 [Git・GitHubの準備](https://t2lab-it.github.io/thermofluid-exercise-2026/setup/git-github.html)に沿って進めてください。
 

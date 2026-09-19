@@ -6,7 +6,7 @@ Windowsで課題を実行する場合は，WSL2 Ubuntu 24.04 のLinux側でJulia
 
 ## 履修者の課題branchとPR
 
-自分に割り当てられたリポジトリでは、`main`から課題branchを作り、変更・テスト・学習ログをそろえてから`main`へのpull request（PR）を作成します。PRではテンプレートに沿って、diffとGitHub Actionsを確認してください。
+公開テンプレートから自分のアカウントに作成したリポジトリでは、`main`から課題branchを作り、変更・テスト・学習ログをそろえてから`main`へのpull request（PR）を作成します。PRではテンプレートに沿って、diffとGitHub Actionsを確認してください。
 
 ## 外部からの提案
 
