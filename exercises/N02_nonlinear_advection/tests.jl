@@ -2,15 +2,40 @@ using Test
 if !isdefined(Main, :N02NonlinearAdvection)
     include(joinpath(@__DIR__, "run.jl"))
 end
+using .N02NonlinearAdvection
 @testset "N02 必須テスト" begin
-    # TODO(必須): 異なる流束の手計算値、先頭と先頭以外の周期左隣添字を確認する。
-    @test false
-    # TODO(必須): 非定数の小配列を選び、保存形1ステップの配列全体を手計算と比較する。旧配列も不変か確かめる。
-    @test false
-    # TODO(必須): 固定の定数1、周期の別の非負定数が保たれることと、固定左右境界の配列全体を確認する。
-    @test false
-    # TODO(必須): 固定・周期のCFLと有界性、一定速度の平行移動とは異なる波形変形を確かめる。判定量と条件の根拠を学習ログに書く。
-    @test false
+    @testset "流束と周期添字" begin
+        @test burgers_flux(1.) == 0.5
+        @test burgers_flux(2.) == 2.
+        @test periodic_left_index(1,4) == 4
+        @test periodic_left_index(3,4) == 2
+    end
+    @testset "保存形1ステップと旧配列不変" begin
+        old=[1.,2.,1.,1.]; saved=copy(old); new=similar(old)
+        nonlinear_upwind_step!(new,old,0.25,1.;boundary=:periodic)
+        @test new == [1.,1.625,1.375,1.]
+        @test old == saved
+    end
+    @testset "定数場と境界条件" begin
+        for (boundary,value) in ((:fixed,1.),(:periodic,0.7))
+            old=fill(value,5); new=similar(old)
+            nonlinear_upwind_step!(new,old,0.2,1.;boundary)
+            apply_boundary!(new;boundary)
+            @test new ≈ old
+        end
+        @test apply_boundary!([4.,2.,3.,8.]) == [1.,2.,3.,3.]
+    end
+    @testset "CFL・有界性・非線形な波形変形" begin
+        for (boundary,nx) in ((:fixed,81),(:periodic,80))
+            r=simulate(;boundary,nx)
+            @test r.max_cfl <= 0.5+1e-14
+            @test 1-1e-13 <= minimum(r.u) <= maximum(r.u) <= 2+1e-13
+            # c=1の解析的平行移動との離散L1差。標準条件で約0.50。
+            shifted=[1.0<=x<=1.5 ? 2. : 1. for x in r.x]
+            @test r.dx*sum(abs.(r.u-shifted)) > 0.2
+            @test maximum(r.u[findall(>(1.5),r.x)]) > 1.2
+        end
+    end
 end
 @testset "N02 自作テスト" begin
     # TODO(自作): 周期の非定数・非負配列を複数ステップ進め、離散総和保存を確認する。入力・許容誤差・期待値を自分で決める。
