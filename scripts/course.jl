@@ -88,7 +88,7 @@ function require_unit_assets(root, id)
     directory = unit_directory(id)
     required = ["run.jl", "tests.jl", "learning_log.md"]
     id == "F03-F04" && push!(required, "F03.jl")
-    id == "N01" && push!(required, "provided_support.jl")
+    id in ("N01", "N02") && push!(required, "provided_support.jl")
     for name in required
         relative = joinpath(directory, name)
         isfile(joinpath(root, relative)) || push!(missing, relative)
