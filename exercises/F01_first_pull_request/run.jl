@@ -13,7 +13,7 @@ function student_greeting(name::AbstractString)::String
     isempty(normalized_name) && throw(ArgumentError("名前を空にはできません"))
 
     # TODO(F01): この仮実装を`Hello, <normalized_name>!`へ置き換える。
-    "TODO: implement student_greeting"
+    "Hello, $(normalized_name)!"
 end
 
 function main(name::AbstractString = "student"; io = stdout)
