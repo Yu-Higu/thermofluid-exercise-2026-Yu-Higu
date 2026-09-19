@@ -60,3 +60,8 @@ julia --project=. -e 'using Pkg; Pkg.test()'
 
 詳しい[コマンド一覧](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/commands.html)と
 [最終プロジェクトへの移行](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/final-project-handoff.html)も参照してください。
+
+## 最終プロジェクト
+
+通常課題の成果を保ったまま，学生自身が公開リポジトリを新規作成します。AIと協働して，必要なコード，Julia環境，テスト，CI，再現手順を整えます。実施形態（2人1組か1人1テーマか）は未定です。リポジトリの作成単位と共同作業者の設定は，実施形態の決定後に案内します。
+[最終プロジェクトの環境構築とコード移行](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/final-project-handoff.html)に従い，必要な課題コードとテストだけを移し，出典と参照元commitを記録してください。
