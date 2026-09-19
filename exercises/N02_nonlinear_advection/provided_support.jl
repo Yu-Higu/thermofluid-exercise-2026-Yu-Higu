@@ -9,7 +9,7 @@ end
 function validate_simulation_inputs(boundary, nx, cfl, t_final)
     validate_boundary(boundary)
     !(nx isa Bool) && nx >= 3 || throw(ArgumentError("nxは3以上の整数です（Bool不可）"))
-    isfinite(cfl) && 0 < cfl <= 1 || throw(ArgumentError("cflは有限で0 < cfl <= 1です"))
+    isfinite(cfl) && cfl > 0 || throw(ArgumentError("cflは有限な正の値です"))
     isfinite(t_final) && t_final > 0 || throw(ArgumentError("t_finalは有限な正の値です"))
 end
 function validate_step_inputs(u_new, u_old, dt, dx, boundary)
@@ -20,11 +20,8 @@ function validate_step_inputs(u_new, u_old, dt, dx, boundary)
     length(u_new) == length(u_old) >= 3 || throw(ArgumentError("新旧は同長で3点以上必要です"))
     Base.mightalias(u_new,u_old) && throw(ArgumentError("新旧バッファが重なっています"))
     all(isfinite,u_old) || throw(ArgumentError("旧配列は有限値にしてください"))
-    all(>=(0),u_old) || throw(ArgumentError("後退差分では非負の旧配列だけを扱います"))
     all(v -> isfinite(v) && v > 0, (dt,dx)) || throw(ArgumentError("dtとdxは有限な正の値です"))
-    courant = maximum(abs,u_old) * dt / dx
-    isfinite(courant) && courant <= 1 + 32eps(Float64) ||
-        throw(ArgumentError("更新前の実効CFLが1を超えています"))
+    # CFL超過や不安定化による負値でも，同じ後退差分を続けて破綻を観察する。
 end
 function summary_section(result; periodic=false)
     section = Dict{String,Any}("nx"=>length(result.x))
@@ -39,16 +36,24 @@ function summary_section(result; periodic=false)
     all(isfinite,values(section)) || error("非有限な診断量は保存できません")
     section
 end
+function solution_plot(r; periodic=false)
+    label = periodic ? "Periodic boundary" : "Fixed boundary"
+    # 周期の末尾へ表示用の点だけ追加する。診断の配列には混ぜない。
+    x = periodic ? vcat(r.x,2.0) : r.x
+    initial = periodic ? vcat(r.u0,r.u0[1]) : r.u0
+    final = periodic ? vcat(r.u,r.u[1]) : r.u
+    low = min(minimum(r.u0),minimum(r.u))
+    high = max(maximum(r.u0),maximum(r.u))
+    padding = 0.05 * (high-low)
+    limits = (min(0.9,low-padding),max(2.1,high+padding))
+    p = plot(x,initial;label="Initial",linewidth=2,xlabel="x",ylabel="u",
+        title="$label, t = $(r.t_final)",size=(800,500),ylims=limits)
+    plot!(p,x,final;label="Final",linewidth=2)
+    return p
+end
 function make_plots(output_dir, fixed, periodic)
-    for (r, name, label) in ((fixed,"fixed-boundary.png","Fixed boundary"),(periodic,"periodic.png","Periodic boundary"))
-        # 周期の末尾へ表示用の点だけ追加する。診断の配列には混ぜない。
-        x = label == "Periodic boundary" ? vcat(r.x,2.0) : r.x
-        initial = label == "Periodic boundary" ? vcat(r.u0,r.u0[1]) : r.u0
-        final = label == "Periodic boundary" ? vcat(r.u,r.u[1]) : r.u
-        p = plot(x,initial;label="Initial",linewidth=2,xlabel="x",ylabel="u",
-            title="$label, t = $(r.t_final)",size=(800,500),ylims=(0.9,2.1))
-        plot!(p,x,final;label="Final",linewidth=2)
-        savefig(p,joinpath(output_dir,name))
+    for (r,name,isperiodic) in ((fixed,"fixed-boundary.png",false),(periodic,"periodic.png",true))
+        savefig(solution_plot(r;periodic=isperiodic),joinpath(output_dir,name))
     end
 end
 function write_outputs(output_dir, fixed, periodic, cfl, t_final)

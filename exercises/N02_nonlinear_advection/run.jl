@@ -19,7 +19,7 @@ function periodic_left_index(i::Integer, n::Integer)
     error("未実装 N02: periodic_left_indexを実装してください")
 end
 
-"""非負の旧配列だけを読み、流束後退差分と陽Eulerで新配列へ書く。
+"""旧配列だけを読み、流束後退差分と陽Eulerで新配列へ書く。
 固定境界では端点を保持し、周期境界では全点を更新する。
 新旧は独立した同長3点以上の浮動小数配列。境界適用は呼出し側で行う。
 """
@@ -49,6 +49,7 @@ end
 
 """独立したx,u0,uと格子・時間刻み・初期/最終診断を返す。
 周期公式条件はnx=80を明示する。初期最大速度から刻みを定め、最終時刻に合わせる。
+CFL超過でも計算を続ける。発散して非有限値になった場合は停止する。
 """
 function simulate(; boundary=:fixed, nx::Integer=81, cfl::Real=0.5, t_final::Real=0.5)
     validate_simulation_inputs(boundary, nx, cfl, t_final)
