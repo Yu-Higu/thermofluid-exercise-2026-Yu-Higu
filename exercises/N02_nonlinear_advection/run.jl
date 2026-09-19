@@ -51,7 +51,7 @@ end
 周期公式条件はnx=80を明示する。初期最大速度から刻みを定め、最終時刻に合わせる。
 CFL超過でも計算を続ける。発散して非有限値になった場合は停止する。
 """
-function simulate(; boundary=:fixed, nx::Integer=81, cfl::Real=0.5, t_final::Real=0.5)
+function simulate(; boundary=:fixed, nx::Integer=81, cfl::Real=0.5, t_final::Real=1.0)
     validate_simulation_inputs(boundary, nx, cfl, t_final)
     dx = 2.0 / (boundary == :fixed ? nx-1 : nx)
     x = [j * dx for j in 0:nx-1]
@@ -78,7 +78,7 @@ function simulate(; boundary=:fixed, nx::Integer=81, cfl::Real=0.5, t_final::Rea
 end
 
 """固定81点・周期80点の公式計算と3出力を生成する。"""
-function main(; output_dir::AbstractString=DEFAULT_OUTPUT_DIR, cfl::Real=0.5, t_final::Real=0.5)
+function main(; output_dir::AbstractString=DEFAULT_OUTPUT_DIR, cfl::Real=0.5, t_final::Real=1.0)
     fixed = simulate(; boundary=:fixed, nx=81, cfl, t_final)
     periodic = simulate(; boundary=:periodic, nx=80, cfl, t_final)
     write_outputs(output_dir, fixed, periodic, cfl, t_final)

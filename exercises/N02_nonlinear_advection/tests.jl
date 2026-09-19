@@ -30,8 +30,8 @@ using .N02NonlinearAdvection
             r=simulate(;boundary,nx)
             @test r.max_cfl <= 0.5+1e-14
             @test 1-1e-13 <= minimum(r.u) <= maximum(r.u) <= 2+1e-13
-            # c=1の解析的平行移動との離散L1差。標準条件で約0.50。
-            shifted=[1.0<=x<=1.5 ? 2. : 1. for x in r.x]
+            # c=1で同じ最終時刻まで移した矩形との離散L1差。周期では左右をつなぐ。
+            shifted=[0.5 <= (boundary==:periodic ? mod(x-r.t_final,2.) : x-r.t_final) <= 1.0 ? 2. : 1. for x in r.x]
             @test r.dx*sum(abs.(r.u-shifted)) > 0.2
             @test maximum(r.u[findall(>(1.5),r.x)]) > 1.2
         end
