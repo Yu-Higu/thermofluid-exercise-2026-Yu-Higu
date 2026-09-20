@@ -6,7 +6,7 @@ include("provided_support.jl")
 export SELECTED_MODEL, advective_flux, stable_timestep, advection_diffusion_step!,
     initial_condition, analytic_solution, conserved_integral, simulate, main
 
-"""選択モデルの保存形移流流束。非線形のspeedは参照しない。"""
+"""選択モデルの保存形移流流束。"""
 function advective_flux(u; model=SELECTED_MODEL, speed=1.0)
     validate_model(model); finite_real(u,"u"); validate_speed(model,speed)
     if model == :linear
@@ -19,14 +19,14 @@ function advective_flux(u; model=SELECTED_MODEL, speed=1.0)
     end
 end
 
-"""C+2Foの合成安定条件を満たす刻み。個別上限のminではない。"""
+"""C+2Foの合成安定条件を満たす刻み。"""
 function stable_timestep(max_speed,dx,diffusivity; safety=0.8)
     validate_timestep_inputs(max_speed,dx,diffusivity,safety)
     # TODO(N04): 合成条件から刻みを返す。
     error("未実装 N04: stable_timestepを実装してください")
 end
 
-"""周期全点を同じ旧配列から更新する。新旧配列は独立で、旧配列は変更しない。"""
+"""u_oldから周期全点の次の値を計算し、u_newへ書き込む。"""
 function advection_diffusion_step!(u_new,u_old,dt,dx,diffusivity;
     model=SELECTED_MODEL,advection=true,speed=1.0)
     validate_step(u_new,u_old,dt,dx,diffusivity,model,advection,speed)
@@ -37,8 +37,8 @@ function advection_diffusion_step!(u_new,u_old,dt,dx,diffusivity;
     return u_new
 end
 
-"""dtは刻みの上限。指定最終時刻に合わせて再調整し、安定上限超過は拒否する。
-全状態の履歴は持たず、初期・最終配列、積分履歴、全時刻の診断を返す。
+"""指定最終時刻まで計算し、初期・最終配列、積分履歴、全時刻の診断を返す。
+dtを指定した場合は、その値を上限に最終時刻へ合わせて刻みを調整する。
 """
 function simulate(;model=SELECTED_MODEL,advection=true,nx=80,diffusivity=0.1,
     speed=1.0,safety=0.8,t_final=1.0,initial=:pulse,dt=nothing)
@@ -76,7 +76,6 @@ function simulate(;model=SELECTED_MODEL,advection=true,nx=80,diffusivity=0.1,
         ensure_finite((integral,),model,step,times[step+1],cfl,fo)
         integral_history[step+1]=integral
         low=min(low,minimum(u_new)); high=max(high,maximum(u_new))
-        # Include the final state in the extrema and CFL diagnostic as well.
         a=maximum_speed(u_new,model,advection,speed)
         cfl,fo=stability_numbers(a,dt,dx,diffusivity)
         max_cfl=max(max_cfl,cfl)
