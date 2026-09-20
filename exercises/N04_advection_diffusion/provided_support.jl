@@ -119,27 +119,28 @@ function summary_section(r)
     return section
 end
 periodic_display(r,u)=(vcat(r.x,2.),vcat(u,u[1]))
+const CONDITION_COLORS=("#0072B2","#D55E00","#009E73")
 function make_plots(directory,a,b,c,convergence)
-    p=plot(periodic_display(c,c.u0)...;label="Initial",linewidth=2,
+    p=plot(periodic_display(c,c.u0)...;label="Initial (t = 0)",color=:gray,linestyle=:dash,linewidth=2,
         xlabel="x (dimensionless)",ylabel=c.model==:linear ? "Temperature u (dimensionless)" : "Velocity u (dimensionless)",
-        title="$(c.model), t = $(c.t_final)",size=(800,500),ylims=(0.95,2.05))
-    for (r,label) in ((a,"Advection only"),(b,"Diffusion only"),(c,"Combined"))
-        plot!(p,periodic_display(r,r.u)...;label,linewidth=2)
+        title="$(c.model), t = $(c.t_final)",size=(800,500),ylims=(0.95,2.05),legend=:outerright)
+    for ((r,label),color) in zip(((a,"Advection only"),(b,"Diffusion only"),(c,"Combined")),CONDITION_COLORS)
+        plot!(p,periodic_display(r,r.u)...;label,color,linestyle=:solid,linewidth=2)
     end
     savefig(p,joinpath(directory,"comparison.png"))
     conservation_title=c.model==:linear ? "Temperature integral conservation error" : "Velocity integral conservation error"
     p=plot(;xlabel="t (dimensionless)",ylabel="(I - I0) / 1e-14",size=(800,500),
         title="$conservation_title\n$(c.model): I0 = $(round(c.initial_integral;digits=5)) (dimensionless)",
-        titlefontsize=12)
-    for (r,label) in ((a,"Advection only"),(b,"Diffusion only"),(c,"Combined"))
-        plot!(p,r.times,(r.integral_history.-r.initial_integral)./1e-14;label,linewidth=2)
+        titlefontsize=12,legend=:outerright)
+    for ((r,label),color) in zip(((a,"Advection only"),(b,"Diffusion only"),(c,"Combined")),CONDITION_COLORS)
+        plot!(p,r.times,(r.integral_history.-r.initial_integral)./1e-14;label,color,linestyle=:solid,linewidth=2)
     end
     savefig(p,joinpath(directory,"conservation.png"))
     dx=convergence["dx"]; errors=convergence["errors"]
-    p=plot(dx,errors;label=string(c.model),marker=:circle,linewidth=2,
+    p=plot(dx,errors;label="Combined ($(c.model))",color=CONDITION_COLORS[3],marker=:circle,linewidth=2,
         xscale=:log10,yscale=:log10,xlabel="dx (dimensionless)",ylabel="Maximum absolute error",
         title="Smooth analytic mode, t = 1",size=(800,500),legend=:topleft)
-    plot!(p,dx,errors[1].*dx./dx[1];label="First order",linestyle=:dash)
+    plot!(p,dx,errors[1].*dx./dx[1];label="First order",color=:black,linestyle=:dot)
     savefig(p,joinpath(directory,"convergence.png"))
 end
 const OUTPUT_NAMES=("comparison.png","conservation.png","convergence.png","summary.toml")
