@@ -12,11 +12,11 @@
 
 ## 対応環境
 
-Windows では，演習に必要な Julia，Git，SSH，VS Code，Julia 拡張機能，コーディングエージェントを WSL2 の Ubuntu 24.04 側で実行します．Windows の PowerShell，Windows版 Julia，Windows版 Git，Git Bash，WSL1 は演習環境として対応しません．
-WSL2 の学生リポジトリは /home/<user>/... に SSH で複製し，Windows の VS Code は Remote - WSL でそのLinux側フォルダーを開いてください．/mnt/c/... 上の実行も対応しません．
-macOS と native Linux は，それぞれのOS側の Julia，Git，SSH，VS Code，エージェントを使う構成を対応します．
+Windows では，演習に必要な Julia，Git，SSH，VS Code，Julia 拡張機能，コーディングエージェントを WSL2 の Ubuntu 24.04 側で実行します．
+WSL2 の学生リポジトリは `/home/<user>/...` に SSH で複製し，Windows の VS Code は Remote - WSL でそのLinux側フォルダーを開いてください．
+macOS と native Linux は，それぞれのOS側の Julia，Git，SSH，VS Code，エージェントを使います．
 
-[公開テンプレート](https://github.com/t2lab-it/thermofluid-exercise-student-2026)の `Use this template` → `Create a new repository` から、学生自身のアカウントをOwnerにして `thermofluid-exercise-2026-<自分のusername>` を作成します。作成した自分のリポジトリをSSHでcloneしてください。WSL2では /home/<user>/... の下に置きます。
+[公開テンプレート](https://github.com/t2lab-it/thermofluid-exercise-student-2026)の `Use this template` → `Create a new repository` から、学生自身のアカウントをOwnerにして `thermofluid-exercise-2026-<自分のusername>` を作成します。作成した自分のリポジトリをSSHでcloneしてください。WSL2では `/home/<user>/...` の下に置きます。
 [環境診断](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/F00.html)と
 [Git・GitHubの準備](https://t2lab-it.github.io/thermofluid-exercise-2026/setup/git-github.html)に沿って進めてください。
 
@@ -30,7 +30,9 @@ julia --project=. scripts/course.jl preflight --confirm-vscode --confirm-github 
 通常編集するのは `run.jl`（実装）、`tests.jl`（自分の確認）、`learning_log.md`（記録）です。
 課題ごとの `tests.jl` には、必須の数値・入出力テストと自分で設計するテストの TODO があります。
 
-理解度チェックを行った授業では，AIとの対話全文を `understanding-check-<lesson-id>.txt` というUTF-8テキストに保存し，対応するLETUSの課題へ提出します．対話全文はこのリポジトリやPRへ追加せず，課題内の `learning_log.md` には提出済みの確認と学んだ点だけを記録します．
+理解度チェックを行った授業では，AIとの対話全文を `understanding-check-<lesson-id>.txt` というUTF-8テキストに保存し，対応するLETUSの課題へ提出します．
+課題内の `learning_log.md` には提出済みの確認と学んだ点を記録します．
+公開する内容は[コントリビューション](CONTRIBUTING.md#公開してはいけない内容)を確認してください．
 
 | 提出単位 | フォルダ | 内容 |
 |---|---|---|
