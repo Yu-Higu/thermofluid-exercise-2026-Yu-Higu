@@ -43,6 +43,46 @@ function convergence_results()
     end
     return result
 end
+const SNAPSHOT_TIMES=(0.25,0.50,0.75,1.0)
+# Avoid the pale yellow end of viridis on a white background.
+const SNAPSHOT_COLORS=[get(cgrad(:viridis),v) for v in (0.08,0.30,0.53,0.76)]
+"""Standard pulse snapshots on the final run's grid and timestep; reuse t=1."""
+function boundary_snapshots(final;boundary)
+    return map(SNAPSHOT_TIMES) do t
+        r=t==final.t_final ? final : simulate(;boundary,nx=length(final.x),
+            diffusivity=final.diffusivity,fo=final.requested_fo,t_final=t)
+        r.x==final.x && r.u0==final.u0 && r.dt==final.dt && r.fo==final.fo ||
+            error("比較図の時刻・格子・刻みが標準計算と一致しません: t=$t")
+        ensure_finite(r.u,r.steps,r.t_final,r.fo)
+        r
+    end
+end
+function boundary_comparison_plot(fixed,insulated)
+    p=plot(fixed.x,fixed.u0;label="",color=:gray,linestyle=:dot,linewidth=2,
+        xlabel="x (dimensionless)",ylabel="u (dimensionless)",
+        title="Diffusion: fixed / insulated",ylims=(-0.05,1.05),legend=false)
+    for (final,boundary,style) in ((fixed,:fixed,:solid),(insulated,:insulated,:dash))
+        for (r,color) in zip(boundary_snapshots(final;boundary),SNAPSHOT_COLORS)
+            plot!(p,r.x,r.u;label="",color,linestyle=style,linewidth=2)
+        end
+    end
+    # Two independent keys beside the single data panel; neither covers curves.
+    time_key=plot(;axis=false,grid=false,legend=:left,legendtitle="Time",framestyle=:none)
+    for (label,color) in zip(("t = 0.25","t = 0.50","t = 0.75","t = 1.0"),SNAPSHOT_COLORS)
+        scatter!(time_key,[NaN],[NaN];label,color,markershape=:square,markerstrokewidth=0)
+    end
+    boundary_key=plot(;axis=false,grid=false,legend=false,framestyle=:none,
+        xlims=(0,1),ylims=(0,1))
+    annotate!(boundary_key,0.02,0.85,text("Line style",12,:left))
+    # Draw long samples explicitly: a narrow automatic legend shortens dashes.
+    for (y,label,style,color) in ((0.68,"Fixed temperature",:solid,:black),
+        (0.50,"Insulated",:dash,:black),(0.32,"Initial (t = 0)",:dot,:gray))
+        plot!(boundary_key,[0.02,0.28],[y,y];label="",color,linestyle=style,linewidth=2)
+        annotate!(boundary_key,0.33,y,text(label,9,:left))
+    end
+    return plot(p,time_key,boundary_key;layout=@layout([a{0.72w} [b; c]]),
+        size=(800,500),background_color=:white)
+end
 function comparison_plot(a,b;unstable=false)
     p=plot(a.x,a.u0;label="Initial",linewidth=2,xlabel="x (dimensionless)",ylabel="u (dimensionless)",
         title="Diffusion, t = $(a.t_final)",size=(800,500))
@@ -55,19 +95,19 @@ function comparison_plot(a,b;unstable=false)
     return p
 end
 function make_plots(directory,fixed,insulated,convergence)
-    savefig(comparison_plot(fixed,insulated),joinpath(directory,"boundary-comparison.png"))
-    p=plot(fixed.times,fixed.heat_history;label="Fixed temperature",linewidth=2,
+    savefig(boundary_comparison_plot(fixed,insulated),joinpath(directory,"boundary-comparison.png"))
+    p=plot(fixed.times,fixed.heat_history;label="Fixed temperature",color=:black,linestyle=:solid,linewidth=2,
         xlabel="t (dimensionless)",ylabel="Heat content H (dimensionless)",size=(800,500))
-    plot!(p,insulated.times,insulated.heat_history;label="Insulated",linewidth=2)
-    hline!(p,[fixed.initial_heat];label="Initial H",linestyle=:dash)
+    plot!(p,insulated.times,insulated.heat_history;label="Insulated",color=:black,linestyle=:dash,linewidth=2)
+    hline!(p,[fixed.initial_heat];label="Initial H",color=:gray,linestyle=:dot)
     savefig(p,joinpath(directory,"heat-content.png"))
     p=plot(;xscale=:log10,yscale=:log10,xlabel="dx",ylabel="Maximum absolute error",size=(800,500),legend=:topleft)
-    for (boundary,label) in (("fixed","Fixed temperature"),("insulated","Insulated"))
+    for (boundary,label,style,marker) in (("fixed","Fixed temperature",:solid,:circle),("insulated","Insulated",:dash,:diamond))
         c=convergence[boundary]
-        plot!(p,c["dx"],c["errors"];label,marker=:circle,linewidth=2)
+        plot!(p,c["dx"],c["errors"];label,color=:black,linestyle=style,marker,linewidth=2)
     end
     c=convergence["fixed"]
-    plot!(p,c["dx"],c["errors"][1].*(c["dx"]./c["dx"][1]).^2;label="Second order",linestyle=:dash)
+    plot!(p,c["dx"],c["errors"][1].*(c["dx"]./c["dx"][1]).^2;label="Second order",color=:black,linestyle=:dot)
     savefig(p,joinpath(directory,"convergence.png"))
 end
 function save_staged(draw,output_dir,summary,names)
