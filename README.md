@@ -41,13 +41,17 @@ julia --project=. scripts/course.jl preflight --confirm-vscode --confirm-github 
 | F02 | `exercises/F02_julia_arrays_and_tests/` | 配列・関数・テスト |
 | F03-F04 | `exercises/F03-F04_vector_calculus/` | ベクトル解析・数値微分 |
 | N01 | `exercises/N01_linear_advection/` | 一次元線形移流 |
+| N02 | `exercises/N02_nonlinear_advection/` | 一次元非線形移流 |
+| N03 | `exercises/N03_diffusion/` | 一次元熱拡散 |
+| N04 | `exercises/N04_advection_diffusion/` | 選択モデルの一次元移流拡散 |
 
 ```fish
 julia --project=. scripts/course.jl status
 ```
 
 F01の手動branch作成、F02以降の課題開始、提出順は[課題ワークフロー](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/workflow.html)を参照してください。
-N02以降は順次追加します。必要な教材が揃うまでは `start` がbranchと進捗を変更せず終了します。
+N05以降は順次追加します。
+必要な教材が揃うまでは `start` がbranchと進捗を変更せず終了します。
 
 ## 実行とテスト
 
