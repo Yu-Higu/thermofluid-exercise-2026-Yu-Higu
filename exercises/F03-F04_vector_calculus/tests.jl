@@ -17,6 +17,14 @@ using .F04NumericalDifferentiation
     @test all(ratio -> 1.8 <= ratio <= 2.2, study.forward_ratios)
     @test all(ratio -> 1.8 <= ratio <= 2.2, study.backward_ratios)
     @test all(ratio -> 3.9 <= ratio <= 4.1, study.centered_ratios)
+
+    coarse = verify_vector_identities(9)
+    fine = verify_vector_identities(17)
+    @test keys(coarse) == (:curl_gradient, :divergence_curl, :product_divergence, :curl_curl)
+    for key in keys(coarse)
+        @test 0 < fine[key] < coarse[key]
+        @test 3.0 <= coarse[key] / fine[key] <= 4.8
+    end
 end
 
 @testset "F03-F04 自作テスト" begin
