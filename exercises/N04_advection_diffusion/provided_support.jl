@@ -127,8 +127,10 @@ function make_plots(directory,a,b,c,convergence)
         plot!(p,periodic_display(r,r.u)...;label,linewidth=2)
     end
     savefig(p,joinpath(directory,"comparison.png"))
+    conservation_title=c.model==:linear ? "Temperature integral conservation error" : "Velocity integral conservation error"
     p=plot(;xlabel="t (dimensionless)",ylabel="(I - I0) / 1e-14",size=(800,500),
-        title="$(c.model): I0 = $(round(c.initial_integral;digits=5)) (dimensionless)")
+        title="$conservation_title\n$(c.model): I0 = $(round(c.initial_integral;digits=5)) (dimensionless)",
+        titlefontsize=12)
     for (r,label) in ((a,"Advection only"),(b,"Diffusion only"),(c,"Combined"))
         plot!(p,r.times,(r.integral_history.-r.initial_integral)./1e-14;label,linewidth=2)
     end
