@@ -79,6 +79,8 @@ function show_status(root)
     println("開くフォルダ: $directory/")
     if state.current == "N05-N06"
         println("編集するファイル: src/、analyze.jl、plot.jl、tests.jl、learning_log.md")
+    elseif state.current == "N07"
+        println("編集するファイル: src/N07Transport.jl、analyze.jl、tests.jl、learning_log.md（表示はplot.jl）")
     else
         println("編集するファイル: run.jl、tests.jl、learning_log.md")
     end
@@ -96,6 +98,10 @@ function require_unit_assets(root, id)
     if id == "N05-N06"
         append!(required,["N05.jl","simulate.jl","analyze.jl","plot.jl","provided_support.jl"])
         isfile(joinpath(root,"src","N06Advection.jl")) || push!(missing,"src/N06Advection.jl")
+    end
+    if id == "N07"
+        append!(required,["simulate.jl","analyze.jl","plot.jl","provided_support.jl"])
+        isfile(joinpath(root,"src","N07Transport.jl")) || push!(missing,"src/N07Transport.jl")
     end
     for name in required
         relative = joinpath(directory, name)
