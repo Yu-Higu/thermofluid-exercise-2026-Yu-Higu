@@ -18,11 +18,11 @@ function draw(stage,data,s;colormap=COLORMAP,color_limits=COLOR_LIMITS,display_c
             xlims=(0.,2.),ylims=(0.,1.),aspect_ratio=:equal))
     end
     savefig(plot(panels...;layout=(2,2),size=(1100,660),margin=5Plots.mm),joinpath(stage,"fields.png"))
-    mass=plot(;xlabel="Saved time",ylabel="Mass - initial mass",legend=:bottomleft)
+    mass=plot(;xlabel="Saved time",ylabel="Mass change / 1e-15",legend=:bottomleft)
     errors=plot(;xlabel="Saved time",ylabel="L2 error",legend=:topleft)
     for id in s["convergence"]["case_ids"]
         d=s["cases"][id]
-        plot!(mass,d["time"],d["mass"].-first(d["mass"]);label=id,marker=:circle)
+        plot!(mass,d["time"],(d["mass"].-first(d["mass"]))./1e-15;label=id,marker=:circle)
         plot!(errors,d["time"],d["l2_error"];label=id,marker=:circle)
     end
     savefig(plot(mass,errors;layout=(1,2),size=(1000,400),margin=5Plots.mm),joinpath(stage,"diagnostics.png"))
@@ -39,7 +39,7 @@ function main(;input_path=joinpath(DEFAULT_OUTPUT_DIR,FIELD_NAME),summary_path=j
         draw(stage,data,s;colormap,color_limits,display_case)
         write_toml(joinpath(stage,"plots.toml"),Dict("schema_version"=>1,"source_fields_sha256"=>file_sha(input_path),
             "source_summary_sha256"=>file_sha(summary_path),"display_case"=>display_case,"time"=>[first(data.cases[display_case]["time"]),last(data.cases[display_case]["time"])],
-            "colormap"=>string(colormap),"color_limits"=>collect(color_limits),"error_colormap"=>"RdBu"))
+            "colormap"=>string(colormap),"color_limits"=>collect(color_limits),"error_colormap"=>"RdBu","mass_display_scale"=>1e-15))
     end
     println("N06を保存場から再作図しました。")
 end
