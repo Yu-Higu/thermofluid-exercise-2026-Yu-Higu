@@ -189,9 +189,18 @@ function check_complete(output_dir=DEFAULT_OUTPUT_DIR)
     require(s["diagnostics_complete"],"spatial_varianceが未実装です")
     require(data.metadata==ROOT_ATTRIBUTES,"公式計算条件と不一致です")
     require(Set(keys(data.cases))==Set(case_id(n...) for n in OFFICIAL_GRIDS),"公式3格子が必要です")
-    expected=diagnostics(data,u->Float64(sum(abs2,u.-sum(u)/length(u))/length(u)))
-    for id in keys(expected["cases"]), key in ("time","mass","mean","minimum","maximum","l2_error","linf_error","variance")
+    # Fixed official reference values validate the student diagnostic without supplying its algorithm.
+    reference_variance=Dict(
+        "n040x030"=>[.07,.06376010565899816,.05810024176767521,.05296472555517874,.04830334553165218],
+        "n080x060"=>[.07,.06680655185569011,.0637652648362681,.06086864410038924,.05810957283257867],
+        "n160x120"=>[.07,.06838411939118463,.06680722926541642,.06526835656917583,.06376655312125709],
+    )
+    expected=diagnostics(data,u->nothing)
+    for id in keys(expected["cases"]), key in ("time","mass","mean","minimum","maximum","l2_error","linf_error")
         require(haskey(s["cases"][id],key) && isapprox(s["cases"][id][key],expected["cases"][id][key];rtol=1e-12,atol=1e-13),"$id/$key: 解析結果が保存場と不一致です")
+    end
+    for (id,reference) in reference_variance
+        require(haskey(s["cases"][id],"variance") && isapprox(s["cases"][id]["variance"],reference;rtol=1e-12,atol=1e-13),"$id/variance: 公式条件の分散と不一致です")
     end
     for c in values(s["cases"])
         require(c["time"]==SAVE_TIMES,"公式保存時刻が必要です")
