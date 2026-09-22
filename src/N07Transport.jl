@@ -88,7 +88,7 @@ function thermal_step!(Tnew,Told,dt,dx,dy;cx,cy,kappa,bc)
     thermal_parameters(cx,cy,kappa,dx,dy,bc); thermal_buffers(Tnew,Told); positive(dt,"dt")
     rate=thermal_rate(cx,cy,kappa,dx,dy,bc)
     require(dt*rate<=1+32eps(Float64),"温度の安定上限を超えています")
-    # TODO(N07): 同じ旧場の面流束を一度構築し、更新と内向き正の辺別レートに使う。
+    # TODO(N07): Common.validate_buffersも再利用し、同じ旧場の面流束を一度構築して更新と辺別レートに使う。
     error("未実装 N07: 温度更新と境界熱流束")
 end
 function burgers_parameters(u,v,nu,dx,dy;safety=1.)
@@ -110,7 +110,7 @@ function burgers_step!(unew,vnew,uold,vold,dt,dx,dy;nu)
     burgers_parameters(uold,vold,nu,dx,dy); thermal_buffers(unew,uold); thermal_buffers(vnew,vold)
     independent((unew,vnew,uold,vold)); positive(dt,"dt")
     require(dt*burgers_rate(uold,vold,nu,dx,dy)<=1+32eps(Float64),"Burgersの安定上限を超えています")
-    # TODO(N07): 周期添字を再利用し、正負風上と拡散で二成分を同じ旧場から更新。
+    # TODO(N07): Common.validate_buffersと周期添字を再利用し、正負風上と拡散で二成分を同じ旧場から更新。
     error("未実装 N07: 二成分Burgers更新")
     (;u=unew,v=vnew)
 end
