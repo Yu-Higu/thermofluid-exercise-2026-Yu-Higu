@@ -77,7 +77,11 @@ function show_status(root)
     end
     directory = unit_directory(state.current)
     println("開くフォルダ: $directory/")
-    println("編集するファイル: run.jl、tests.jl、learning_log.md")
+    if state.current == "N05-N06"
+        println("編集するファイル: src/、analyze.jl、plot.jl、tests.jl、learning_log.md")
+    else
+        println("編集するファイル: run.jl、tests.jl、learning_log.md")
+    end
     state.current in ("N05-N06", "N07", "N08-N09") && println("共通コード: src/")
     println("実行: julia --project=. $(joinpath(directory, "run.jl"))")
     println("テスト: julia --project=. -e 'using Pkg; Pkg.test()'")
@@ -89,6 +93,10 @@ function require_unit_assets(root, id)
     required = ["run.jl", "tests.jl", "learning_log.md"]
     id == "F03-F04" && push!(required, "F03.jl")
     id in ("N01", "N02", "N03", "N04") && push!(required, "provided_support.jl")
+    if id == "N05-N06"
+        append!(required,["N05.jl","simulate.jl","analyze.jl","plot.jl","provided_support.jl"])
+        isfile(joinpath(root,"src","N06Advection.jl")) || push!(missing,"src/N06Advection.jl")
+    end
     for name in required
         relative = joinpath(directory, name)
         isfile(joinpath(root, relative)) || push!(missing, relative)
