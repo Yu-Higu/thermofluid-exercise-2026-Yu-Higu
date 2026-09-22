@@ -74,4 +74,5 @@ function advection_diffusion_step!(args...;kwargs...)
     error("未実装 N05: N04.advection_diffusion_step!")
 end
 end
+include("N06Advection.jl")
 end
