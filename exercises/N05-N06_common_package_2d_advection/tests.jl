@@ -28,3 +28,16 @@ end
     # TODO: 公式3格子で誤差が減少し、両区間が約1次収束することを確認する。
     @test false
 end
+module N0506OutputChecks
+include("provided_support.jl")
+include("N05.jl")
+end
+@testset "N05-N06 保存結果と出自" begin
+    @test N0506OutputChecks.check_complete()
+    baseline=joinpath(@__DIR__,"results","N05","baseline.toml")
+    regression=joinpath(@__DIR__,"results","N05","regression.toml")
+    @test isfile(baseline) && isfile(regression)
+    report=N0506OutputChecks.TOML.parsefile(regression)
+    @test report["baseline_sha256"]==N0506OutputChecks.file_sha(baseline)
+    @test report["code_sha256"]==N0506OutputChecks.N05Regression.code_hashes(normpath(joinpath(@__DIR__,"..","..")))
+end
