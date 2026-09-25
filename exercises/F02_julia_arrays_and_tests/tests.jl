@@ -9,9 +9,13 @@ end
     original = copy(values)
     anomalies = F02JuliaArraysAndTests.temperature_anomaly(values)
 
+    # この具体例の平均と偏差は厳密に表せる値なので、==で比較する。
     @test F02JuliaArraysAndTests.mean_temperature(values) == 8.0
     @test anomalies == [-3.0, -1.0, 4.0]
+    # 総和だけなら全要素ゼロでも通るため、上の具体例と組み合わせる。
+    # 0との比較には正のatolを使う。入力の型・大きさを変えたら許容誤差も考える。
     @test isapprox(sum(anomalies), 0.0; atol=100eps())
+    # originalは呼び出し前にcopyした値。単なる代入では変更を見逃す。
     @test values == original
     @test_throws ArgumentError F02JuliaArraysAndTests.mean_temperature(Float64[])
 end
