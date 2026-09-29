@@ -16,7 +16,21 @@ Windows では，演習に必要な Julia，Git，SSH，VS Code，Julia 拡張�
 WSL2 の学生リポジトリは `/home/<user>/...` に SSH で複製し，Windows の VS Code は Remote - WSL でそのLinux側フォルダーを開いてください．
 macOS と native Linux は，それぞれのOS側の Julia，Git，SSH，VS Code，エージェントを使います．
 
-[公開テンプレート](https://github.com/t2lab-it/thermofluid-exercise-student-2026)の `Use this template` → `Create a new repository` から、学生自身のアカウントをOwnerにして `thermofluid-exercise-2026-<自分のusername>` を作成します。作成した自分のリポジトリをSSHでcloneしてください。WSL2では `/home/<user>/...` の下に置きます。
+GitHubで自分をOwnerとする空の公開リポジトリ `thermofluid-exercise-2026-<自分のusername>` を作成します。
+README・`.gitignore`・ライセンスを初期生成しません。
+[学生用配布リポジトリ](https://github.com/t2lab-it/thermofluid-exercise-student-2026)をSSHで通常cloneして履歴を保持し，配布元を`upstream`，個人の提出先を`origin`にします。
+以下の`OWNER/REPOSITORY`と`YOUR_COURSE_REPOSITORY`を自分の値に置き換えます。
+
+```fish
+git clone git@github.com:t2lab-it/thermofluid-exercise-student-2026.git YOUR_COURSE_REPOSITORY
+cd YOUR_COURSE_REPOSITORY
+git remote rename origin upstream
+git remote add origin git@github.com:OWNER/REPOSITORY.git
+git push -u origin main
+```
+
+WSL2では `/home/<user>/...` の下に置きます。
+別PCで個人リポジトリをcloneしたら，`upstream`を再登録します。
 [環境診断](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/F00.html)と
 [Git・GitHubの準備](https://t2lab-it.github.io/thermofluid-exercise-2026/setup/git-github.html)に沿って進めてください。
 
@@ -61,13 +75,23 @@ N05以降は順次追加します。
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
-現在・完了済みの課題を検証します。開始した課題の未実装や、学生記入対象の未記入テストは失敗します。
-結果がある課題では、実行時に課題内の `results/` が作られます。図・数値を確認し、ログから参照してcommitします。
+過去課題の失敗は警告として表示し，現在課題まで続行します。
+現在課題の失敗はエラーです。
+進捗の破損・必須ファイル欠落・実行基盤の異常・結果サイズ超過は引き続きエラーです。
+課題単独の`tests.jl`は，過去課題でも失敗時に非0で終了します。
+`start`は現在・過去課題の失敗を警告にして，直後の提出単位へ進めます。
+`completed`と通過済みは進捗の記録で，テスト合格や採点上の課題完了を証明しません。
+既習課題の進捗commit・ローカルmergeと配布更新の手順は，公開課題ワークフローとコマンド一覧を参照してください。
+結果がある課題では、実行時に課題内の `results/` が作られます。
+図・数値を確認し、ログから参照してcommitします。
 
 詳しい[コマンド一覧](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/commands.html)と
 [最終プロジェクトへの移行](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/final-project-handoff.html)も参照してください。
 
 ## 最終プロジェクト
 
-通常課題の成果を保ったまま，学生自身が公開リポジトリを新規作成します。AIと協働して，必要なコード，Julia環境，テスト，CI，再現手順を整えます。実施形態（2人1組か1人1テーマか）は未定です。リポジトリの作成単位と共同作業者の設定は，実施形態の決定後に案内します。
+通常課題の成果を保ったまま，学生自身が公開リポジトリを新規作成します。
+AIと協働して，必要なコード，Julia環境，テスト，CI，再現手順を整えます。
+実施形態（2人1組か1人1テーマか）は未定です。
+リポジトリの作成単位と共同作業者の設定は，実施形態の決定後に案内します。
 [最終プロジェクトの環境構築とコード移行](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/final-project-handoff.html)に従い，必要な課題コードとテストだけを移し，出典と参照元commitを記録してください。
