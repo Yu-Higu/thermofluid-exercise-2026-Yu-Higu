@@ -17,7 +17,7 @@ WSL2 の学生リポジトリは `/home/<user>/...` に SSH で複製し，Windo
 macOS と native Linux は，それぞれのOS側の Julia，Git，SSH，VS Code，エージェントを使います．
 
 GitHubで自分をOwnerとする空の公開リポジトリ `thermofluid-exercise-2026-<自分のusername>` を作成します。
-README・`.gitignore`・ライセンスを初期生成しません。
+README・`.gitignore`・ライセンスの初期生成のチェックを外して作成します。
 [学生用配布リポジトリ](https://github.com/t2lab-it/thermofluid-exercise-student-2026)をSSHで通常cloneして履歴を保持し，配布元を`upstream`，個人の提出先を`origin`にします。
 以下の`OWNER/REPOSITORY`と`YOUR_COURSE_REPOSITORY`を自分の値に置き換えます。
 
@@ -29,7 +29,6 @@ git remote add origin git@github.com:OWNER/REPOSITORY.git
 git push -u origin main
 ```
 
-WSL2では `/home/<user>/...` の下に置きます。
 別PCで個人リポジトリをcloneしたら，`upstream`を再登録します。
 [環境診断](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/F00.html)と
 [Git・GitHubの準備](https://t2lab-it.github.io/thermofluid-exercise-2026/setup/git-github.html)に沿って進めてください。
@@ -64,8 +63,6 @@ julia --project=. scripts/course.jl status
 ```
 
 F01の手動branch作成、F02以降の課題開始、提出順は[課題ワークフロー](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/workflow.html)を参照してください。
-N05以降は順次追加します。
-必要な教材が揃うまでは `start` がbranchと進捗を変更せず終了します。
 
 ## 実行とテスト
 
@@ -75,13 +72,12 @@ N05以降は順次追加します。
 julia --project=. -e 'using Pkg; Pkg.test()'
 ```
 
-過去課題の失敗は警告として表示し，現在課題まで続行します。
-現在課題の失敗はエラーです。
-進捗の破損・必須ファイル欠落・実行基盤の異常・結果サイズ超過は引き続きエラーです。
-課題単独の`tests.jl`は，過去課題でも失敗時に非0で終了します。
-`start`は現在・過去課題の失敗を警告にして，直後の提出単位へ進めます。
-`completed`と通過済みは進捗の記録で，テスト合格や採点上の課題完了を証明しません。
-既習課題の進捗commit・ローカルmergeと配布更新の手順は，公開課題ワークフローとコマンド一覧を参照してください。
+過去課題の失敗は警告として現在課題まで検査を続け，現在課題の失敗はエラーとして扱います。
+詳しくは[テスト結果の読み方](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/testing.html#test-results)を参照してください。
+`start`では課題の失敗を警告にして，次の提出単位へ進めます。
+既習課題は[再準備後の手順](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/workflow.html#previous-exercises)で順に通過します。
+`completed`と通過済みは進捗の記録です。
+課題の完了は，各課題ページの完了条件で確認してください。
 結果がある課題では、実行時に課題内の `results/` が作られます。
 図・数値を確認し、ログから参照してcommitします。
 

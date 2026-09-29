@@ -60,7 +60,7 @@ function show_status(root)
     state = load_progress(joinpath(root, "course_progress.toml"))
     completed = isempty(state.completed) ? "なし" : join(state.completed, ", ")
     println("現在の提出単位: $(state.current)")
-    println("通過済み（テスト合格を示しません）: $completed")
+    println("通過済み: $completed")
     if state.current == "F00"
         println("環境診断: julia --project=. scripts/course.jl preflight")
         return

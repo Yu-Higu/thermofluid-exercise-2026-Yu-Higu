@@ -8,12 +8,12 @@ macOSとnative Linuxは各OS側の環境を使います．
 
 ## 履修者の課題branchとPR
 
-配布元の履歴を空の個人リポジトリへ初回pushした学生リポジトリでは、`main`から課題branchを作り、変更・テスト・学習ログをそろえてから`main`へのpull request（PR）を作成します。
+`main`から課題branchを作り、変更・テスト・学習ログをそろえてから`main`へのpull request（PR）を作成します。
 PRではテンプレートに沿って、diffとGitHub Actionsを確認してください。
 
 教材更新は`upstream`から更新用branchへ通常のmergeで取り込み，更新PRを**Create a merge commit**で統合します。
 現在課題のテスト失敗は修正し，過去課題の警告も課題IDと原因を確認してください。
-既習課題を再実装せず進む場合は，F00確認後に進捗をcommit・ローカルmergeしてから，既存の`start`で一課題ずつ進めます。
+作業環境を再準備した場合は，F00確認後に進捗をcommit・ローカルmergeしてから，`start`で既習課題を順に通過します。
 詳細は[課題ワークフロー](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/workflow.html#previous-exercises)と[配布更新](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/commands.html#material-updates)を参照してください。
 
 ## 外部からの提案
