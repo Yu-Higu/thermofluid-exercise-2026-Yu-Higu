@@ -3,7 +3,8 @@ using ThermofluidExercise
 const E=ThermofluidExercise.Elliptic
 export gauss_seidel_step!,sor_step!,solve_relaxation
 function sor_step!(u,f,dx,dy;omega=1.5)
-    E.buffers(u,f);ax,ay,d=E.coefficients(dx,dy)
+    E.buffers(u,f);E.require(all(isfinite,u),"更新前の場は有限値が必要です")
+    ax,ay,d=E.coefficients(dx,dy)
     E.require(omega isa Real && isfinite(omega) && 0<omega<2,"omegaは0<omega<2です")
     # TODO_BEGIN sor
     error("未実装 発展: sor")

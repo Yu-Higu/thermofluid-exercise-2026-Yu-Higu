@@ -29,7 +29,7 @@ function main(;selection="all",input_dir=DEFAULT_OUTPUT_DIR,output_dir=DEFAULT_O
     names=Tuple(joinpath(id,n) for id in ids for n in (PNG_FILES...,"plots.toml"))
     staged(output_dir,names;publish_options...) do stage
         for id in ids
-            dir=joinpath(stage,id);mkpath(dir);pair=read_fields(joinpath(input_dir,id,"fields.h5"));summary=summaries[id]
+            dir=joinpath(stage,id);mkpath(dir);pair=read_fields(joinpath(input_dir,id,"fields.h5");expected_id=id);summary=summaries[id]
             config=make_plots(dir,id,pair,summary)
             doc=merge(config,Dict("schema_version"=>1,"task_id"=>id,"run_id"=>summary["run_id"],"source_fields_sha256"=>file_sha(joinpath(input_dir,id,"fields.h5")),"source_summary_sha256"=>file_sha(joinpath(input_dir,id,"summary.toml")),"png_sha256"=>Dict(n=>file_sha(joinpath(dir,n)) for n in PNG_FILES)))
             write_toml(joinpath(dir,"plots.toml"),doc)

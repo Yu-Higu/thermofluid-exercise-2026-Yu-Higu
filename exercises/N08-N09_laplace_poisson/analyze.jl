@@ -1,7 +1,7 @@
 module N08N09Analysis
 include("provided_support.jl")
 function main(;selection="all",input_dir=DEFAULT_OUTPUT_DIR,output_dir=DEFAULT_OUTPUT_DIR,publish_options...)
-    ids=selection_ids(selection);pairs=Dict(id=>read_fields(joinpath(input_dir,id,"fields.h5")) for id in ids)
+    ids=selection_ids(selection);pairs=Dict(id=>read_fields(joinpath(input_dir,id,"fields.h5");expected_id=id) for id in ids)
     require(length(unique(pairs[id].metadata["run_id"] for id in ids))==1,"run_idが混在しています")
     staged(output_dir,Tuple(joinpath(id,"summary.toml") for id in ids);publish_options...) do stage
         for id in ids

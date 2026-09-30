@@ -88,11 +88,12 @@ function write_fields(path,cases,meta;official=true)
     end
     read_fields(path;official)
 end
-function read_fields(path;official=true)
+function read_fields(path;official=true,expected_id=nothing)
     isfile(path) || error("HDF5欠落: $(path)。simulate.jlを実行してください")
     try
         h5open(path,"r") do h
             meta=Dict(k=>read_attribute(h,k) for k in ROOT_KEYS);validate_metadata(meta)
+            expected_id===nothing || require(meta["task_id"]==expected_id,"保存場のtask_idと要求された内容IDが不一致です")
             require(haskey(h,"cases"),"cases欠落");cases=Dict{String,Any}()
             for grid in keys(h["cases"])
                 group=h["cases/$grid"];c=Dict{String,Any}(k=>read_attribute(group,k) for k in CASE_KEYS)
@@ -135,7 +136,7 @@ function diagnostics(pair,hash)
     Dict("schema_version"=>1,"task_id"=>id,"run_id"=>meta["run_id"],"source_fields_sha256"=>hash,"diagnostics_complete"=>true,"conditions"=>Dict(k=>meta[k] for k in ("domain","units","grid_location","boundary","method","atol","rtol","maxiter")),"orders_l2"=>orders(l2),"orders_linf"=>orders(linf),"cases"=>out)
 end
 function read_summary(path,input_dir,id)
-    d=TOML.parsefile(path);hash=file_sha(joinpath(input_dir,id,"fields.h5"));pair=read_fields(joinpath(input_dir,id,"fields.h5"))
+    d=TOML.parsefile(path);hash=file_sha(joinpath(input_dir,id,"fields.h5"));pair=read_fields(joinpath(input_dir,id,"fields.h5");expected_id=id)
     require(d==diagnostics(pair,hash),"summaryが保存場の独立診断と一致しません")
     d
 end
