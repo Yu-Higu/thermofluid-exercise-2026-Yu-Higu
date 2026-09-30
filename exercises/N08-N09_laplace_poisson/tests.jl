@@ -1,5 +1,5 @@
 using Test
-# 不明な引数はimport／TODOの呼出しより前に拒否する。
+# 実行対象はN08-checkまたはall。
 const N08N09_TEST_MODE=abspath(PROGRAM_FILE)==(@__FILE__) ? (isempty(ARGS) ? "all" : length(ARGS)==1 ? only(ARGS) : "invalid") : "all"
 N08N09_TEST_MODE in ("N08-check","all") || error("引数は[N08-check|all]です")
 using ThermofluidExercise
@@ -28,7 +28,7 @@ include("provided_support.jl")
     zero=E.solve_laplace(zeros(5,4),zeros(5,4),.2,.3)
     @test zero.converged && zero.iterations==0 && zero.update_history==[0.]
     boundary=zeros(5,4);boundary[end,:].=1e-12
-    # Tiny field updates with stiff coefficients still leave a large equation residual.
+    # 更新量と方程式残差の違いを確認する。
     one=E.solve_laplace(zeros(5,4),boundary,1e-7,2e-7;maxiter=1,atol=1e-10,rtol=0.)
     @test one.reason==:maxiter && !one.converged && one.iterations==1
     @test one.update_history[end]<1e-10 && one.residual_history[end]>one.threshold

@@ -70,11 +70,11 @@ function poisson_residual!(r,u,f,dx,dy)
     r
 end
 interior_norm(a)=maximum(abs,@view a[2:end-1,2:end-1])
-"""提供driver。新場の真の残差で停止し、非有限sweepは採用しない。"""
+"""提供の反復処理。新場の残差を使って停止を判定する。"""
 function solve_driver(u0,g,f,dx,dy,step!,residual!;atol=1e-10,rtol=1e-12,maxiter=200000)
     matrix(u0;finite=true);matrix(g;finite=true);coefficients(dx,dy);tolerances(atol,rtol)
     require(maxiter isa Integer && !(maxiter isa Bool) && maxiter>0,"maxiterは正整数です")
-    # Use a private scratch to validate every input and alias before starting.
+    # 作業用配列を使い、入力を検査する。
     old=copy(u0); f===nothing ? buffers(old,u0,g) : buffers(old,u0,g,f)
     apply_dirichlet!(old,g);new=similar(old);r=similar(old)
     f===nothing ? residual!(r,old,dx,dy) : residual!(r,old,f,dx,dy)

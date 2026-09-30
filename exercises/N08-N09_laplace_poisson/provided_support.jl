@@ -1,4 +1,4 @@
-# 提供: 定常場の問題生成、独立診断、保存と反映。数値ソルバをimportしない。
+# 提供: 定常場の問題生成、独立診断、保存と反映。
 using HDF5, SHA, TOML
 const DEFAULT_OUTPUT_DIR=joinpath(@__DIR__,"results")
 const OFFICIAL_GRIDS=((17,13),(33,25),(65,49))
@@ -111,7 +111,7 @@ function read_fields(path;official=true,expected_id=nothing)
         error("HDF5読取り失敗 $path: $(sprint(showerror,e))")
     end
 end
-"""保存場から独立に再計算する。数値TODOへ依存しない。"""
+"""保存場から残差を独立に再計算する。"""
 function independent_residual(u,f,dx,dy)
     r=zeros(size(u))
     for j in 2:size(u,2)-1,i in 2:size(u,1)-1
