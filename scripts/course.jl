@@ -74,6 +74,13 @@ function show_status(root)
         println("編集するファイル: src/、analyze.jl、plot.jl、tests.jl、learning_log.md")
     elseif state.current == "N07"
         println("編集するファイル: src/N07Transport.jl、analyze.jl、tests.jl、learning_log.md（表示はplot.jl）")
+    elseif state.current == "N08-N09"
+        println("編集するファイル: src/N08N09Elliptic.jl、tests.jl、learning_log.md（計算simulate.jl、解析analyze.jl、表示plot.jl）")
+        println("授業内: julia --project=. $(joinpath(directory,"tests.jl")) N08-check（N08の4関数のみ。全体完了ではありません）")
+        println("N08単独: julia --project=. $(joinpath(directory,"run.jl")) N08")
+        println("全体: julia --project=. $(joinpath(directory,"run.jl")) all")
+        println("発展はextensions/の独立コマンドです。必修の完了には要求しません")
+        println("src編集後: julia --project=. exercises/N05-N06_common_package_2d_advection/N05.jl verify → Pkg.test()")
     else
         println("編集するファイル: run.jl、tests.jl、learning_log.md")
     end
