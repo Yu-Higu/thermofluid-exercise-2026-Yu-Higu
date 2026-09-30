@@ -4,8 +4,20 @@ include("provided_support.jl")
 function make_plots(stage,id,pair,summary)
     grid=case_id(33,25);c=pair.cases[grid];p=problem(id,33,25);u=c["u"];err=u-p.exact
     limits=extrema(vcat(vec(u),vec(p.exact)));e=max(maximum(abs,err),eps(Float64))
-    panels=[heatmap(p.x,p.y,transpose(a);xlabel="x",ylabel="y",title=t,clims=range,color=palette,aspect_ratio=:equal) for (a,t,range,palette) in ((u,"Numerical",limits,:viridis),(p.exact,"Exact",limits,:viridis),(err,"Error u - exact",(-e,e),:RdBu))]
-    savefig(plot(panels...;layout=(1,3),size=(1200,430),margin=6Plots.mm),joinpath(stage,"fields.png"))
+    panels=[];scales=[]
+    for (a,title,clims,palette) in ((u,"Numerical",limits,:viridis),(p.exact,"Exact",limits,:viridis),(err,"Error u - exact",(-e,e),:RdBu))
+        push!(panels,heatmap(p.x,p.y,transpose(a);xlabel="x",ylabel="y",title,
+            xlims=extrema(p.x),ylims=extrema(p.y),xticks=0:0.5:2,yticks=0:0.5:1,
+            clims,color=palette,colorbar=false,aspect_ratio=:equal,widen=false))
+        values=collect(range(clims...;length=256))
+        ticks=[first(values),(first(values)+last(values))/2,last(values)]
+        push!(scales,heatmap(values,[0.,1.],repeat(transpose(values),2,1);
+            clims,color=palette,colorbar=false,xlims=clims,ylims=(0.,1.),
+            xticks=(ticks,string.(round.(ticks;sigdigits=3))),
+            yaxis=false,grid=false,widen=false,tickfontsize=7))
+    end
+    layout=@layout [a b c; d{0.08h} e f]
+    savefig(plot(panels...,scales...;layout,size=(1200,310),margin=5Plots.mm,left_margin=7Plots.mm),joinpath(stage,"fields.png"))
     residual=plot(;xlabel="Iteration (not time)",ylabel="Linf norm",yscale=:log10,legend=:topright,size=(850,520))
     colors=(:blue,:orange,:green)
     for ((nx,ny),color) in zip(OFFICIAL_GRIDS,colors)
