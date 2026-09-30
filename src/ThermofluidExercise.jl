@@ -76,4 +76,5 @@ end
 end
 include("N06Advection.jl")
 include("N07Transport.jl")
+include("N08N09Elliptic.jl")
 end
