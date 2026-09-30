@@ -120,6 +120,10 @@ function require_unit_assets(root, id)
         append!(required,["simulate.jl","analyze.jl","plot.jl","provided_support.jl"])
         isfile(joinpath(root,"src","N07Transport.jl")) || push!(missing,"src/N07Transport.jl")
     end
+    if id == "N08-N09"
+        append!(required,["simulate.jl","analyze.jl","plot.jl","provided_support.jl"])
+        isfile(joinpath(root,"src","N08N09Elliptic.jl")) || push!(missing,"src/N08N09Elliptic.jl")
+    end
     for name in required
         relative = joinpath(directory, name)
         isfile(joinpath(root, relative)) || push!(missing, relative)
