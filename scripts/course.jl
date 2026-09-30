@@ -1,10 +1,12 @@
 include(joinpath(@__DIR__, "lib", "CourseWorkflow.jl"))
 include(joinpath(@__DIR__, "lib", "ResultLimits.jl"))
+include(joinpath(@__DIR__, "lib", "CourseTests.jl"))
 include(joinpath(@__DIR__, "..", "exercises", "F00_environment", "run.jl"))
 
 using .CourseWorkflow
 using .F00Environment
 using .ResultLimits
+using .CourseTests
 
 const SLUGS = Dict(
     "F02" => "julia-arrays-and-tests",
@@ -50,16 +52,7 @@ function require_result_limits(root)
 end
 
 function require_local_tests(root)
-    runner = joinpath("test", "runtests.jl")
-    command = Cmd(Cmd([
-        Base.julia_cmd().exec...,
-        "--startup-file=no",
-        "--project=.",
-        runner,
-    ]); dir=root)
-    process = run(ignorestatus(command))
-    process.exitcode == 0 ||
-        throw(ArgumentError("ローカルテストが失敗しました。test/runtests.jlを確認してから次へ進んでください"))
+    run_course_tests(root; policy=:advance) || error("共通検査が失敗しました。進捗は更新しません")
     nothing
 end
 
@@ -67,7 +60,7 @@ function show_status(root)
     state = load_progress(joinpath(root, "course_progress.toml"))
     completed = isempty(state.completed) ? "なし" : join(state.completed, ", ")
     println("現在の提出単位: $(state.current)")
-    println("完了済み: $completed")
+    println("通過済み: $completed")
     if state.current == "F00"
         println("環境診断: julia --project=. scripts/course.jl preflight")
         return
@@ -87,30 +80,6 @@ function show_status(root)
     state.current in ("N05-N06", "N07", "N08-N09") && println("共通コード: src/")
     println("実行: julia --project=. $(joinpath(directory, "run.jl"))")
     println("テスト: julia --project=. -e 'using Pkg; Pkg.test()'")
-end
-
-function require_unit_assets(root, id)
-    missing = String[]
-    directory = unit_directory(id)
-    required = ["run.jl", "tests.jl", "learning_log.md"]
-    id == "F03-F04" && push!(required, "F03.jl")
-    id in ("N01", "N02", "N03", "N04") && push!(required, "provided_support.jl")
-    if id == "N05-N06"
-        append!(required,["N05.jl","simulate.jl","analyze.jl","plot.jl","provided_support.jl"])
-        isfile(joinpath(root,"src","N06Advection.jl")) || push!(missing,"src/N06Advection.jl")
-    end
-    if id == "N07"
-        append!(required,["simulate.jl","analyze.jl","plot.jl","provided_support.jl"])
-        isfile(joinpath(root,"src","N07Transport.jl")) || push!(missing,"src/N07Transport.jl")
-    end
-    for name in required
-        relative = joinpath(directory, name)
-        isfile(joinpath(root, relative)) || push!(missing, relative)
-    end
-    isempty(missing) || throw(ArgumentError(
-        "$id の教材が揃っていません: $(join(missing, ", "))。現在の課題を続け、教員に配布状況を確認してください",
-    ))
-    nothing
 end
 
 function start_exercise(root, id; persist_progress=save_progress)
