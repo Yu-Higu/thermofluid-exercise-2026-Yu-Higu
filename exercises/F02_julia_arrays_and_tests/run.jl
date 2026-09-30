@@ -13,13 +13,13 @@ end
 function mean_temperature(values::AbstractVector{<:Real})
     validate_temperatures(values)
     # TODO(F02): すべての値の合計を求め、要素数で割る。
-    zero(float(first(values)))
+    error("未実装 F02: mean_temperature")
 end
 
 function temperature_anomaly(values::AbstractVector{<:Real})
     validate_temperatures(values)
     # TODO(F02): `value - mean_temperature(values)`を要素とする新しい配列を返す。
-    collect(values)
+    error("未実装 F02: temperature_anomaly")
 end
 
 end

@@ -13,7 +13,7 @@ function stable_timestep(cx,cy,dx,dy;safety=0.8)
     speeds(cx,cy); positive(dx,"dx"); positive(dy,"dy"); positive(safety,"safety")
     safety<=1 && (cx>0 || cy>0) || throw(ArgumentError("safety<=1、少なくとも一方の速度は正です"))
     # TODO(N06): 方向別寄与を足した安定条件から刻みを求める。
-    dt = error("未実装 N06: 合成時間刻み")
+    dt = error("未実装 N06: stable_timestep")
     positive(dt,"合成dt（表現範囲）")
     result=Float64(dt); positive(result,"Float64の合成dt")
     return result
@@ -27,7 +27,7 @@ function advection_step!(u_new,u_old,dt,dx,dy;cx=1.0,cy=0.5)
     all(isfinite,(Cx,Cy)) && Cx+Cy<=1+32eps(Float64) || throw(ArgumentError("合成CFL<=1を超えています: Cx=$Cx, Cy=$Cy"))
     nx,ny=size(u_old)
     # TODO(N06): 両方向の周期隣接と流束を使い、全点を旧配列だけから更新する。
-    error("未実装 N06: 周期二次元更新")
+    error("未実装 N06: advection_step!")
     return u_new
 end
 end

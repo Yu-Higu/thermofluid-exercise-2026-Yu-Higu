@@ -28,17 +28,20 @@ end
 pure(bc)=all(side->bc[side].kind==:neumann,SIDES)
 function weights(nx,ny,dx,dy)
     # TODO_BEGIN weights
-    error("未実装 発展: weights")
+    # TODO(N08-N09): 節点の半セル重みを返す。
+    error("未実装 N08-N09: NeumannExtension.weights (発展)")
     # TODO_END weights
 end
 function mean_zero!(u,dx,dy)
     # TODO_BEGIN mean_zero
-    error("未実装 発展: mean_zero")
+    # TODO(N08-N09): 重み付き平均がゼロになるように場を調整する。
+    error("未実装 N08-N09: NeumannExtension.mean_zero! (発展)")
     # TODO_END mean_zero
 end
 function compatibility(f,dx,dy,bc)
     # TODO_BEGIN compatibility
-    error("未実装 発展: compatibility")
+    # TODO(N08-N09): 右辺と外向き境界流束の適合条件を検証する。
+    error("未実装 N08-N09: NeumannExtension.compatibility (発展)")
     # TODO_END compatibility
 end
 function fixed_value(i,j,nx,ny,bc)
@@ -49,21 +52,24 @@ function fixed_value(i,j,nx,ny,bc)
 end
 function neighbors(u,i,j,dx,dy,bc)
     # TODO_BEGIN neighbors
-    error("未実装 発展: neighbors")
+    # TODO(N08-N09): 境界条件に応じた隣接値・ゴースト値を返す。
+    error("未実装 N08-N09: NeumannExtension.neighbors (発展)")
     # TODO_END neighbors
 end
 function neumann_jacobi_step!(new,old,f,dx,dy,bc;omega=2/3)
     ax,ay,d=validate(new,old,f,dx,dy,bc)
     require(omega isa Real && isfinite(omega) && 0<omega<1,"omegaは0<omega<1です")
     # TODO_BEGIN weighted_update
-    error("未実装 発展: weighted_update")
+    # TODO(N08-N09): 同じ旧場から重み付きJacobi更新を計算する。
+    error("未実装 N08-N09: NeumannExtension.neumann_jacobi_step! (発展)")
     # TODO_END weighted_update
     new
 end
 function neumann_residual!(r,u,f,dx,dy,bc)
     ax,ay,d=validate(r,u,f,dx,dy,bc)
     # TODO_BEGIN residual
-    error("未実装 発展: residual")
+    # TODO(N08-N09): Neumann境界を含む離散残差を求める。
+    error("未実装 N08-N09: NeumannExtension.neumann_residual! (発展)")
     # TODO_END residual
     r
 end

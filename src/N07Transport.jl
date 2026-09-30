@@ -74,14 +74,14 @@ end
 function thermal_stable_timestep(cx,cy,kappa,dx,dy,bc;safety=.8)
     thermal_parameters(cx,cy,kappa,dx,dy,bc;safety)
     require(thermal_rate(cx,cy,kappa,dx,dy,bc)>0,"全係数0では刻みを決められません")
-    # TODO(N07): 半セル境界を含む合成上限。
-    dt=error("未実装 N07: 温度の安定刻み")
+    # TODO(N07): 半セル境界を含む合成上限から時間刻みを求める。
+    dt=error("未実装 N07: thermal_stable_timestep")
     checked_timestep(dt)
 end
 function thermal_fluxes!(fluxes,T,dx,dy;cx,cy,kappa,bc)
     thermal_parameters(cx,cy,kappa,dx,dy,bc); validate_fluxes(fluxes,T)
     # TODO(N07): 正x・正y方向、移流と拡散を分けて全ての面へ書く。
-    error("未実装 N07: 温度の面流束")
+    error("未実装 N07: thermal_fluxes!")
     fluxes
 end
 function thermal_step!(Tnew,Told,dt,dx,dy;cx,cy,kappa,bc)
@@ -89,7 +89,7 @@ function thermal_step!(Tnew,Told,dt,dx,dy;cx,cy,kappa,bc)
     rate=thermal_rate(cx,cy,kappa,dx,dy,bc)
     require(dt*rate<=1+32eps(Float64),"温度の安定上限を超えています")
     # TODO(N07): Common.validate_buffersも再利用し、同じ旧場の面流束を一度構築して更新と辺別レートに使う。
-    error("未実装 N07: 温度更新と境界熱流束")
+    error("未実装 N07: thermal_step!")
 end
 function burgers_parameters(u,v,nu,dx,dy;safety=1.)
     matrix(u;old=true); matrix(v;old=true); require(size(u)==size(v),"二成分の形状が異なります"); independent((u,v))
@@ -103,15 +103,15 @@ function burgers_stable_timestep(u,v,nu,dx,dy;safety=.8)
     burgers_parameters(u,v,nu,dx,dy;safety)
     require(burgers_rate(u,v,nu,dx,dy)>0,"全速度・粘性0では刻みを決められません")
     # TODO(N07): このステップの旧場の局所速度から合成刻みを決める。
-    dt=error("未実装 N07: Burgersの動的刻み")
+    dt=error("未実装 N07: burgers_stable_timestep")
     checked_timestep(dt)
 end
 function burgers_step!(unew,vnew,uold,vold,dt,dx,dy;nu)
     burgers_parameters(uold,vold,nu,dx,dy); thermal_buffers(unew,uold); thermal_buffers(vnew,vold)
     independent((unew,vnew,uold,vold)); positive(dt,"dt")
     require(dt*burgers_rate(uold,vold,nu,dx,dy)<=1+32eps(Float64),"Burgersの安定上限を超えています")
-    # TODO(N07): Common.validate_buffersと周期添字を再利用し、正負風上と拡散で二成分を同じ旧場から更新。
-    error("未実装 N07: 二成分Burgers更新")
+    # TODO(N07): Common.validate_buffersと周期添字を再利用し、正負風上と拡散で二成分を同じ旧場から更新する。
+    error("未実装 N07: burgers_step!")
     (;u=unew,v=vnew)
 end
 end
