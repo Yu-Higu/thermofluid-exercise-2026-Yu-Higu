@@ -34,7 +34,7 @@ function apply_boundary!(u_new,u_old,r::Real;boundary=:fixed)
         u_new[end]=0.0
     else
         # TODO(N03): 旧配列を用い、半セルに対応する係数で両端を更新する。
-        error("未実装 N03: 断熱端の更新を実装してください")
+        error("未実装 N03: apply_boundary!")
     end
     return u_new
 end
@@ -49,7 +49,7 @@ function diffusion_step!(u_new,u_old,dt::Real,dx::Real,diffusivity::Real;boundar
     positive_finite(r,"実効Fourier数")
     for i in 2:length(u_old)-1
         # TODO(N03): 旧配列だけから内部点の次時刻値を計算する。
-        error("未実装 N03: 内部点の更新を実装してください")
+        error("未実装 N03: diffusion_step!")
     end
     apply_boundary!(u_new,u_old,r;boundary)
     return u_new
@@ -62,7 +62,7 @@ function thermal_content(u,dx::Real)
     all(isfinite,u) || throw(ArgumentError("温度を有限値にしてください"))
     positive_finite(dx,"dx")
     # TODO(N03): 台形則の積分を返す。
-    error("未実装 N03: thermal_contentを実装してください")
+    error("未実装 N03: thermal_content")
 end
 
 """指定時刻へ刻みを合わせる。foは実効値、requested_foは指定値。

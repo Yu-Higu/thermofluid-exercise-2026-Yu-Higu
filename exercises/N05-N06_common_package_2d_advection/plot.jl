@@ -34,6 +34,7 @@ end
 function main(;input_path=joinpath(DEFAULT_OUTPUT_DIR,FIELD_NAME),summary_path=joinpath(DEFAULT_OUTPUT_DIR,"summary.toml"),output_dir=DEFAULT_OUTPUT_DIR,
     colormap=COLORMAP,color_limits=COLOR_LIMITS,display_case=DISPLAY_CASE,publish_options...)
     data=read_fields(input_path); s=read_summary(summary_path,input_path)
+    require(get(s,"diagnostics_complete",false),"spatial_varianceが未実装です")
     names=("fields.png","diagnostics.png","convergence.png","plots.toml")
     staged(output_dir,names;publish_options...) do stage
         draw(stage,data,s;colormap,color_limits,display_case)

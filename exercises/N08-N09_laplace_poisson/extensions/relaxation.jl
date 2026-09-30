@@ -7,7 +7,8 @@ function sor_step!(u,f,dx,dy;omega=1.5)
     ax,ay,d=E.coefficients(dx,dy)
     E.require(omega isa Real && isfinite(omega) && 0<omega<2,"omegaは0<omega<2です")
     # TODO_BEGIN sor
-    error("未実装 発展: sor")
+    # TODO(N08-N09): 逐次更新と緩和係数を用いてSORの1ステップを実装する。
+    error("未実装 N08-N09: RelaxationExtension.sor_step! (発展)")
     # TODO_END sor
     u
 end

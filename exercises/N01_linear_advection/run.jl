@@ -44,7 +44,7 @@ function rectangular_initial_condition(
     矩形状の初期分布を実装する。
     各座標xiがplateau_start <= xi <= plateau_endを満たすか判定する。
     =#
-    return fill(float(base), length(x))
+    error("未実装 N01: rectangular_initial_condition")
 end
 
 """
@@ -77,7 +77,7 @@ function upwind_step!(u_new, u_old, c::Real, dt::Real, dx::Real)
         風上差分と陽Euler法による1ステップの更新を実装する。
         授業ページの式を、iとi - 1の添字を使ってコードへ写す。
         =#
-        u_new[i] = u_old[i]
+        error("未実装 N01: upwind_step!")
     end
     return u_new
 end
@@ -112,7 +112,7 @@ function centered_step!(u_new, u_old, c::Real, dt::Real, dx::Real)
         中心差分と陽Euler法による1ステップの更新を実装する。
         授業ページの式を、i - 1とi + 1の添字を使ってコードへ写す。
         =#
-        u_new[i] = u_old[i]
+        error("未実装 N01: centered_step!")
     end
     return u_new
 end

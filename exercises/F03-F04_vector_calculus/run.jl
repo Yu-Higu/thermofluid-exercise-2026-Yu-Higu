@@ -37,19 +37,19 @@ end
 function forward_difference(f, x, h)
     validate_scalar_input(x, h)
     # TODO(F04): 前進差分商を実装する。
-    zero(float(x + h))
+    error("未実装 F04: forward_difference")
 end
 
 function backward_difference(f, x, h)
     validate_scalar_input(x, h)
     # TODO(F04): 後退差分商を実装する。
-    zero(float(x + h))
+    error("未実装 F04: backward_difference")
 end
 
 function centered_difference(f, x, h)
     validate_scalar_input(x, h)
     # TODO(F04): 中心差分商を実装する。
-    zero(float(x + h))
+    error("未実装 F04: centered_difference")
 end
 
 function convergence_study(f, derivative, x, spacings)

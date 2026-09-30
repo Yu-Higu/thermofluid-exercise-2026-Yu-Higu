@@ -40,6 +40,8 @@ julia --project=. scripts/course.jl preflight --confirm-vscode --confirm-github 
 
 [公開課題ページ](https://t2lab-it.github.io/thermofluid-exercise-2026/)から，対応するローカルの課題フォルダを開きます．
 通常編集するのは `run.jl`（実装），`tests.jl`（自分の確認），`learning_log.md`（記録）です．
+実装箇所は`TODO(課題ID)`で探し，`error("未実装 課題ID: 関数識別子")`を自分の計算処理へ置き換えます．
+課題ページに従って`src/`，`analyze.jl`，発展の`extensions/`も確認し，N06の分散の例外と選択・発展の範囲は[共通ガイド](https://t2lab-it.github.io/thermofluid-exercise-2026/guides/workflow.html#implementation-todos)を参照してください．
 課題ごとの `tests.jl` には，必須の数値・入出力テストと自分で設計するテストの TODO があります．
 
 理解度チェックを行った授業では，AIとの対話全文を `understanding-check-<lesson-id>.txt` というUTF-8テキストに保存し，対応するLETUSの課題へ提出します．

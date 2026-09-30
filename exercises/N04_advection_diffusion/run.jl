@@ -11,11 +11,11 @@ function advective_flux(u; model=SELECTED_MODEL, speed=1.0)
     validate_model(model); finite_real(u,"u"); validate_speed(model,speed)
     if model == :linear
         # TODO(N04): 線形を選んだ場合だけ実装する。
-        error("未実装 N04: 線形流束を実装してください")
+        error("未実装 N04: advective_flux (linear)")
     else
         nonnegative_finite(u,"非線形移流のu")
         # TODO(N04): 非線形を選んだ場合だけ実装する。
-        error("未実装 N04: 非線形流束を実装してください")
+        error("未実装 N04: advective_flux (nonlinear)")
     end
 end
 
@@ -23,7 +23,7 @@ end
 function stable_timestep(max_speed,dx,diffusivity; safety=0.8)
     validate_timestep_inputs(max_speed,dx,diffusivity,safety)
     # TODO(N04): 合成条件から刻みを返す。
-    error("未実装 N04: stable_timestepを実装してください")
+    error("未実装 N04: stable_timestep")
 end
 
 """u_oldから周期全点の次の値を計算し、u_newへ書き込む。"""
@@ -32,7 +32,7 @@ function advection_diffusion_step!(u_new,u_old,dt,dx,diffusivity;
     validate_step(u_new,u_old,dt,dx,diffusivity,model,advection,speed)
     for i in eachindex(u_old)
         # TODO(N04): 周期の左右隣接を使い、移流と拡散を同じ旧配列から足す。
-        error("未実装 N04: 周期更新を実装してください")
+        error("未実装 N04: advection_diffusion_step!")
     end
     return u_new
 end
