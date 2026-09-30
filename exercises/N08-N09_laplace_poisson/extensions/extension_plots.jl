@@ -6,10 +6,13 @@ function plot_extension(dir,pair,summary)
         c=pair.cases[id*"_"*case_id(33,25)];p=ext=="neumann" ? neumann_problem(id,33,25) : problem("N09",33,25)
         exact=copy(p.exact);ext=="neumann" && is_pure(p.bc) && (exact.-=weighted_mean(exact,p.dx,p.dy))
         limits=extrema(vcat(vec(c["u"]),vec(exact)));error=c["u"]-exact;e=max(maximum(abs,error),eps())
-        config[id]=Dict("field_color_range"=>collect(limits),"error_color_range"=>[-e,e])
-        for (a,t,clims,color) in ((c["u"],"$id numerical",limits,:viridis),(exact,"Exact",limits,:viridis),(error,"Error",(-e,e),:RdBu))
-            ticks=color==:RdBu ? [-e,0.,e] : collect(range(clims...;length=3))
-            push!(panels,heatmap(p.x,p.y,transpose(a);title=t,xlabel="x",ylabel="y",aspect_ratio=:equal,clims,color,titlefontsize=9,colorbar_ticks=ticks,colorbar_formatter=color==:RdBu ? :scientific : :auto))
+        # GR uses its own automatic colorbar ticks. Display a stated power-of-ten
+        # unit so tiny errors retain readable ticks and a symmetric physical range.
+        exponent=floor(Int,log10(e));scale=10.0^exponent
+        config[id]=Dict("field_color_range"=>collect(limits),"error_color_range"=>[-e,e],
+            "error_display_scale"=>scale,"error_display_color_range"=>[-e/scale,e/scale])
+        for (a,t,clims,color) in ((c["u"],"$id numerical",limits,:viridis),(exact,"Exact",limits,:viridis),(error./scale,"Error (×10^$exponent)",(-e/scale,e/scale),:RdBu))
+            push!(panels,heatmap(p.x,p.y,transpose(a);title=t,xlabel="x",ylabel="y",aspect_ratio=:equal,clims,color,titlefontsize=9,tickfontsize=6))
         end
     end
     savefig(plot(panels...;layout=(length(ids),3),size=(1200,350length(ids)),margin=5Plots.mm),joinpath(dir,"fields.png"))
