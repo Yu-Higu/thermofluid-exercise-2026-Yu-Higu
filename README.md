@@ -5,7 +5,7 @@
 <!-- contract-section: student_created_repository -->
 ## 初回の準備
 
-- Julia 1.13.0
+- Julia 1.13系（1.13.0以上・1.14.0未満）
 - Git
 - VS Code
 - GitHub Copilot，OpenAI Codex，Amazon Q Developerのいずれか一つ
