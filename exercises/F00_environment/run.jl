@@ -169,9 +169,11 @@ function collect_preflight(;
     julia_version = version_probe()
     julia_check = ObservedCheck(
         :julia,
-        julia_version == REQUIRED_JULIA_VERSION,
+        julia_version >= REQUIRED_JULIA_VERSION &&
+            (julia_version.major, julia_version.minor) ==
+            (REQUIRED_JULIA_VERSION.major, REQUIRED_JULIA_VERSION.minor),
         string(julia_version),
-        "JuliaupでJulia 1.13.0をインストールして選択し、この確認を再実行してください。",
+        "JuliaupでJulia 1.13系をインストールして選択し、この確認を再実行してください。",
     )
 
     git_probe = command_probe("git", ["--version"])

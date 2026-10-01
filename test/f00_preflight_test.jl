@@ -62,9 +62,16 @@ end
         @test report.julia.passed && report.julia.observed == "1.13.0"
         @test report.git.passed
 
-        wrong_version = f00_report(julia_version=v"1.13.1")
-        @test !wrong_version.julia.passed
-        @test occursin("1.13.0", wrong_version.julia.action)
+        for julia_version in (v"1.13.0", v"1.13.1", v"1.13.99")
+            compatible = f00_report(; julia_version)
+            @test compatible.julia.passed
+            @test compatible.julia.observed == string(julia_version)
+        end
+        for julia_version in (v"1.12.9", v"1.13.0-rc1", v"1.14.0-rc1", v"1.14.0", v"2.0.0")
+            wrong_version = f00_report(; julia_version)
+            @test !wrong_version.julia.passed
+            @test occursin("1.13", wrong_version.julia.action)
+        end
         missing_git = f00_report(git_ok=false)
         @test !missing_git.git.passed
         @test occursin("Git", missing_git.git.action)
@@ -105,7 +112,7 @@ end
             @test read(progress_path, String) == before
         end
         for failed_report in (
-            f00_report(julia_version=v"1.13.1"),
+            f00_report(julia_version=v"1.14.0"),
             f00_report(git_ok=false),
             f00_report(platform=:windows),
             f00_report(kernel_release=WSL2_KERNEL, workspace="/mnt/c/course"),
