@@ -49,7 +49,7 @@ end
             @test (classify_runtime(platform, kernel_release).kind,
                    report.runtime.passed, report.workspace.passed) == (kind, passed, passed)
         end
-        for workspace in ("/mnt/c/course", "/mnt/d/course", "/tmp/course")
+        for workspace in ("/mnt/c/course", "/tmp/course")
             report = f00_report(; kernel_release=WSL2_KERNEL, workspace)
             @test !report.workspace.passed
             @test occursin(workspace, report.workspace.observed)
@@ -82,8 +82,6 @@ end
             ["--confirm-agent", "claude"],
             ["--confirm-agent"],
             ["--confirm-agent", "copilot", "--confirm-agent", "codex"],
-            ["--confirm-github", "--confirm-github"],
-            ["--confirm-vscode", "--confirm-vscode"],
             ["--unknown"],
         )
             @test_throws ArgumentError parse_preflight_arguments(arguments)

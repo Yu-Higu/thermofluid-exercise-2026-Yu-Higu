@@ -12,15 +12,11 @@ include("provided_support.jl")
     @test new[1,:]==g[1,:] && new[end,:]==g[end,:] && new[:,1]==g[:,1] && new[:,end]==g[:,end]
     @test new[2:4,2:3]==inside
     @test E.laplace_jacobi_step!(new,old,.2,.3)===new
-    for j in 2:3,i in 2:4
-        @test new[i,j]≈((old[i-1,j]+old[i+1,j])/.2^2+(old[i,j-1]+old[i,j+1])/.3^2)/(2/.2^2+2/.3^2)
-    end
+    @test new[2:4,2:3]≈[281/13 502/13;372/13 606/13;489/13 736/13]
     @test old==saved
     @test new[1,:]==old[1,:] && new[end,:]==old[end,:] && new[:,1]==old[:,1] && new[:,end]==old[:,end]
     r=similar(old);@test E.laplace_residual!(r,old,.2,.3)===r
-    for j in 2:3,i in 2:4
-        @test r[i,j]≈-((old[i-1,j]-2old[i,j]+old[i+1,j])/.2^2+(old[i,j-1]-2old[i,j]+old[i,j+1])/.3^2)
-    end
+    @test r[2:4,2:3]≈fill(-350/3,3,2)
     @test all(iszero,r[1,:]) && all(iszero,r[end,:]) && all(iszero,r[:,1]) && all(iszero,r[:,end])
     @test E.residual_converged(1.,10.;atol=1.,rtol=.01)
     @test !E.residual_converged(1.01,10.;atol=1.,rtol=.01)
@@ -43,12 +39,10 @@ else
     @testset "N09: 生成項の符号・f=0一致・残差" begin
         old=[Float64(i^2+3j^2+i*j) for i in 1:5,j in 1:4];saved=copy(old);f=fill(2.,5,4);new=similar(old);r=similar(old);lap=similar(old)
         @test E.poisson_jacobi_step!(new,old,f,.2,.3)===new
-        for j in 2:3,i in 2:4
-            @test new[i,j]≈((old[i-1,j]+old[i+1,j])/.2^2+(old[i,j-1]+old[i,j+1])/.3^2-f[i,j])/(2/.2^2+2/.3^2)
-        end
+        @test new[2:4,2:3]≈[7016/325 12541/325;9291/325 15141/325;12216/325 18391/325]
         @test old==saved && new[1,:]==old[1,:] && new[:,end]==old[:,end]
         @test E.poisson_residual!(r,old,f,.2,.3)===r
-        @test r[3,2]≈2-((old[2,2]-2old[3,2]+old[4,2])/.2^2+(old[3,1]-2old[3,2]+old[3,3])/.3^2)
+        @test r[2:4,2:3]≈fill(-344/3,3,2)
         @test all(iszero,r[1,:]) && all(iszero,r[:,end])
         E.laplace_jacobi_step!(lap,old,.2,.3);E.poisson_jacobi_step!(new,old,zeros(5,4),.2,.3);@test lap==new
         E.laplace_residual!(lap,old,.2,.3);E.poisson_residual!(r,old,zeros(5,4),.2,.3);@test lap==r
