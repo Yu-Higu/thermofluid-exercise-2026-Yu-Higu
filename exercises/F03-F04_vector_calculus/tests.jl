@@ -35,5 +35,12 @@ end
 
 @testset "F03-F04 自作テスト" begin
     # TODO(自作): 別の関数、評価点、または入力条件を選び、どの実装ミスを検出するか説明できるテストを一つ書く。F03単独の別テストは作らない。
-    @test false
+    # 3方式の期待値をまとめて比べ、差分の向きや刻み幅の係数の誤りを検出する。
+    polynomial(x) = x^3 - 2x
+    differences = [
+        forward_difference(polynomial, -1.0, 0.2),
+        backward_difference(polynomial, -1.0, 0.2),
+        centered_difference(polynomial, -1.0, 0.2),
+    ]
+    @test differences ≈ [0.44, 1.64, 1.04]
 end
