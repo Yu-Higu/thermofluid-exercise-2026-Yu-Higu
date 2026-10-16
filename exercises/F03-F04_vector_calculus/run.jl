@@ -36,19 +36,16 @@ end
 
 function forward_difference(f, x, h)
     validate_scalar_input(x, h)
-    # TODO(F04): 前進差分商を実装する。
     (f(x + h) - f(x)) / h
 end
 
 function backward_difference(f, x, h)
     validate_scalar_input(x, h)
-    # TODO(F04): 後退差分商を実装する。
     (f(x) - f(x - h)) / h
 end
 
 function centered_difference(f, x, h)
     validate_scalar_input(x, h)
-    # TODO(F04): 中心差分商を実装する。
     (f(x + h) - f(x - h)) / (2h)
 end
 
@@ -94,8 +91,6 @@ function centered_partial(f, point, axis, h; differentiator = centered_differenc
     differentiator(slice, point[axis], h)
 end
 
-# The supplied analytic gradient is differentiated externally with the student's centered difference.
-# The inner gradient is not student work in this residual calculation.
 function curl_gradient_residual(point, h)
     validate_point(point)
     (
@@ -108,14 +103,11 @@ function curl_gradient_residual(point, h)
     )
 end
 
-# The supplied analytic curl is differentiated externally with the student's centered difference.
-# The inner curl is not student work in this residual calculation.
 function divergence_curl_residual(point, h)
     validate_point(point)
     sum(centered_partial(p -> curl_vector(p)[axis], point, axis, h) for axis in 1:3)
 end
 
-# Differentiate the product field numerically and evaluate the right-hand side analytically.
 function product_divergence_residual(point, h)
     validate_point(point)
     lhs = sum(centered_partial(p -> scalar_field(p) * vector_field(p)[axis],
@@ -147,10 +139,8 @@ function verify_vector_identities(n)
     divergence_curl = 0.0
     product_divergence = 0.0
     curl_curl = 0.0
-    # Compare maxima on a common physical region as the grid is refined.
     interior = filter(x -> abs(x) <= 0.75, coordinates[2:(end - 1)])
     for x in interior, y in interior, z in interior
-
         point = (x, y, z)
         curl_gradient = max(curl_gradient, maximum(abs, curl_gradient_residual(point, h)))
         divergence_curl = max(divergence_curl, abs(divergence_curl_residual(point, h)))
