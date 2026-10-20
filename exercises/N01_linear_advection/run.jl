@@ -37,14 +37,18 @@ function rectangular_initial_condition(
     plateau_start::Real = 0.5,
     plateau_end::Real = 1.0,
 )
+
     validate_initial_condition_inputs(x, base, plateau, plateau_start, plateau_end)
 
-    #=
-    TODO(N01):
-    矩形状の初期分布を実装する。
-    各座標xiがplateau_start <= xi <= plateau_endを満たすか判定する。
-    =#
-    error("未実装 N01: rectangular_initial_condition")
+    u0 = Vector{Float64}(undef, length(x))
+    for i in eachindex(x)
+        if plateau_start <= x[i] <= plateau_end
+            u0[i] = plateau
+        else
+            u0[i] = base
+        end
+    end
+    return u0
 end
 
 """
@@ -72,12 +76,7 @@ function upwind_step!(u_new, u_old, c::Real, dt::Real, dx::Real)
     # copyto!で古い値を複製し、内部を更新する間も両端点の値を保ちます。
     copyto!(u_new, u_old)
     for i in 2:(length(u_old) - 1)
-        #=
-        TODO(N01):
-        風上差分と陽Euler法による1ステップの更新を実装する。
-        授業ページの式を、iとi - 1の添字を使ってコードへ写す。
-        =#
-        error("未実装 N01: upwind_step!")
+        u_new[i] = u_old[i] - courant * (u_old[i] - u_old[i - 1])
     end
     return u_new
 end
@@ -107,12 +106,7 @@ function centered_step!(u_new, u_old, c::Real, dt::Real, dx::Real)
     # copyto!で古い値を複製し、内部を更新する間も両端点の値を保ちます。
     copyto!(u_new, u_old)
     for i in 2:(length(u_old) - 1)
-        #=
-        TODO(N01):
-        中心差分と陽Euler法による1ステップの更新を実装する。
-        授業ページの式を、i - 1とi + 1の添字を使ってコードへ写す。
-        =#
-        error("未実装 N01: centered_step!")
+        u_new[i] = u_old[i] - courant / 2 * (u_old[i + 1] - u_old[i - 1])
     end
     return u_new
 end
