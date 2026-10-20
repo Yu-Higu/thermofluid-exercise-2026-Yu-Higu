@@ -74,20 +74,57 @@ function make_plots(output_dir::AbstractString, upwind, centered)
     upwind_path = joinpath(output_dir, "upwind.png")
     centered_path = joinpath(output_dir, "centered-euler.png")
 
-    for (result, title, path) in (
-        (upwind, "Upwind + Euler (stable)", upwind_path),
-        (centered, "Centered + Euler (intentionally unstable)", centered_path),
+    for (result, step!, title, path, color_map) in (
+        (upwind, upwind_step!, "Upwind + Euler (stable)", upwind_path, :viridis),
+        (
+            centered,
+            centered_step!,
+            "Centered + Euler (intentionally unstable)",
+            centered_path,
+            :plasma,
+        ),
     )
+        requested_times = (0.125, 0.250, 0.375, 0.5)
+        snapshot_steps = sort(unique(
+            round(Int, time / result.dt)
+            for time in requested_times
+            if time <= result.dt * result.steps
+        ))
+        snapshots = [(time = 0.0, values = copy(result.u0))]
+        u_old = copy(result.u0)
+        u_new = similar(u_old)
+        c = result.cfl * result.dx / result.dt
+
+        for step in 1:maximum(snapshot_steps; init = 0)
+            step!(u_new, u_old, c, result.dt, result.dx)
+            apply_boundary!(u_new)
+            u_old, u_new = u_new, u_old
+            if step in snapshot_steps
+                push!(snapshots, (time = step * result.dt, values = copy(u_old)))
+            end
+        end
+
+        colors = palette(color_map, length(snapshots))
         plot(
             result.x,
-            result.u0;
+            snapshots[1].values;
             label = "Initial",
+            color = colors[1],
             linewidth = 2,
             xlabel = "x",
             ylabel = "u",
             title = title,
         )
-        plot!(result.x, result.u; label = "Final", linewidth = 2)
+        for index in 2:length(snapshots)
+            snapshot = snapshots[index]
+            plot!(
+                result.x,
+                snapshot.values;
+                label = "t = $(round(snapshot.time; digits = 3))",
+                color = colors[index],
+                linewidth = 2,
+            )
+        end
         savefig(path)
     end
     return (upwind = upwind_path, centered = centered_path)
