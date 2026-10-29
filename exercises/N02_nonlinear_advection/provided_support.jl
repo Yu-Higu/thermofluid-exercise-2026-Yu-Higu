@@ -40,15 +40,18 @@ function solution_plot(r; periodic=false)
     label = periodic ? "Periodic boundary" : "Fixed boundary"
     # 周期の末尾へ表示用の点だけ追加する。診断の配列には混ぜない。
     x = periodic ? vcat(r.x,2.0) : r.x
-    initial = periodic ? vcat(r.u0,r.u0[1]) : r.u0
-    final = periodic ? vcat(r.u,r.u[1]) : r.u
-    low = min(minimum(r.u0),minimum(r.u))
-    high = max(maximum(r.u0),maximum(r.u))
+    curves = [periodic ? vcat(snapshot.u,snapshot.u[1]) : snapshot.u for snapshot in r.snapshots]
+    low = minimum(minimum, curves)
+    high = maximum(maximum, curves)
     padding = 0.05 * (high-low)
     limits = (min(0.9,low-padding),max(2.1,high+padding))
-    p = plot(x,initial;label="Initial",linewidth=2,xlabel="x",ylabel="u",
-        title="$label, t = $(r.t_final)",size=(800,500),ylims=limits)
-    plot!(p,x,final;label="Final",linewidth=2)
+    colors = palette(:viridis,length(curves))
+    p = plot(;xlabel="x",ylabel="u",title=label,size=(800,500),ylims=limits)
+    for (index,(snapshot,values)) in enumerate(zip(r.snapshots,curves))
+        curve_label = index == 1 ? "Initial" :
+            index == length(curves) ? "Final, t = $(snapshot.time)" : "t = $(snapshot.time)"
+        plot!(p,x,values;label=curve_label,color=colors[index],linewidth=index in (1,length(curves)) ? 2.5 : 2)
+    end
     return p
 end
 function make_plots(output_dir, fixed, periodic)
