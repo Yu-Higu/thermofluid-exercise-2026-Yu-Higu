@@ -8,7 +8,7 @@ export burgers_flux, periodic_left_index, nonlinear_upwind_step!, apply_boundary
 function burgers_flux(u::Real)
     isfinite(u) || throw(ArgumentError("流束の入力を有限値にしてください"))
     # TODO(N02): 保存形Burgers方程式の流束を返す。
-    error("未実装 N02: burgers_flux")
+    return u^2 / 2
 end
 
 """1始まりの周期配列で左隣の添字を返す。"""
@@ -16,7 +16,7 @@ function periodic_left_index(i::Integer, n::Integer)
     (i isa Bool || n isa Bool || n < 1 || !(1 <= i <= n)) &&
         throw(ArgumentError("添字は1 <= i <= n、点数はn >= 1の整数です（Bool不可）"))
     # TODO(N02): 先頭の左隣が末尾になるようにする。
-    error("未実装 N02: periodic_left_index")
+    return i == 1 ? n : i - 1
 end
 
 """旧配列だけを読み、流束後退差分と陽Eulerで新配列へ書く。
@@ -30,7 +30,7 @@ function nonlinear_upwind_step!(u_new, u_old, dt::Real, dx::Real; boundary=:fixe
     for i in indices
         left = boundary == :periodic ? periodic_left_index(i, length(u_old)) : i - 1
         # TODO(N02): 古い値の流束の差で更新する。u_oldは変更しない。
-        error("未実装 N02: nonlinear_upwind_step!")
+        u_new[i] = u_old[i] - dt / dx * (burgers_flux(u_old[i]) - burgers_flux(u_old[left]))
     end
     all(isfinite, u_new) || error("更新後に非有限値があります。更新式を確認してください")
     return u_new
@@ -47,7 +47,7 @@ function apply_boundary!(u; boundary=:fixed)
     return u
 end
 
-"""独立したx,u0,uと格子・時間刻み・初期/最終診断を返す。
+"""独立したx,u0,uと格子・時間刻み・指定時刻の状態・診断を返す。
 周期公式条件はnx=80を明示する。初期最大速度から刻みを定め、最終時刻に合わせる。
 CFL超過でも計算を続ける。発散して非有限値になった場合は停止する。
 """
@@ -62,16 +62,23 @@ function simulate(; boundary=:fixed, nx::Integer=81, cfl::Real=0.5, t_final::Rea
     u_old = copy(u0)
     u_new = similar(u_old)
     max_cfl = maximum(abs, u_old) * dt / dx
-    for _ in 1:steps
+    snapshot_steps = unique(round.(Int, range(0, steps; length=5)))
+    snapshots = [(time=0.0, u=copy(u0))]
+    next_snapshot = 2
+    for step in 1:steps
         nonlinear_upwind_step!(u_new, u_old, dt, dx; boundary)
         apply_boundary!(u_new; boundary)
         all(isfinite, u_new) || error("更新後に非有限値があります")
         max_cfl = max(max_cfl, maximum(abs, u_new) * dt / dx)
         u_old, u_new = u_new, u_old
+        if next_snapshot <= length(snapshot_steps) && step == snapshot_steps[next_snapshot]
+            push!(snapshots, (time=step * dt, u=copy(u_old)))
+            next_snapshot += 1
+        end
     end
     initial_minimum, initial_maximum = extrema(u0)
     low, high = extrema(u_old)
-    return (; x, u0, u=u_old, dx, dt, steps, max_cfl, t_final,
+    return (; x, u0, u=u_old, snapshots, dx, dt, steps, max_cfl, t_final,
         initial_minimum, initial_maximum, minimum=low, maximum=high,
         overshoot=max(high-initial_maximum,0.0), undershoot=max(initial_minimum-low,0.0),
         initial_sum=sum(u0), final_sum=sum(u_old), sum_change=sum(u_old)-sum(u0))
