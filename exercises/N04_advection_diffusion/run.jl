@@ -1,7 +1,7 @@
 # N04: SELECTED_MODELを選び、選択流束・合成刻み・周期更新の3か所を実装する。
 # 読む順: 流束 → 刻み → 1ステップ → simulate → main。入力検証・解析解・描画は提供済み。
 module N04AdvectionDiffusion
-const SELECTED_MODEL = :unselected
+const SELECTED_MODEL = :nonlinear
 include("provided_support.jl")
 export SELECTED_MODEL, advective_flux, stable_timestep, advection_diffusion_step!,
     initial_condition, analytic_solution, conserved_integral, simulate, main
@@ -10,20 +10,18 @@ export SELECTED_MODEL, advective_flux, stable_timestep, advection_diffusion_step
 function advective_flux(u; model=SELECTED_MODEL, speed=1.0)
     validate_model(model); finite_real(u,"u"); validate_speed(model,speed)
     if model == :linear
-        # TODO(N04): 線形を選んだ場合だけ実装する。
-        error("未実装 N04: advective_flux (linear)")
+        return speed*u
     else
         nonnegative_finite(u,"非線形移流のu")
-        # TODO(N04): 非線形を選んだ場合だけ実装する。
-        error("未実装 N04: advective_flux (nonlinear)")
+        return u^2/2
     end
 end
 
 """C+2Foの合成安定条件を満たす刻み。"""
 function stable_timestep(max_speed,dx,diffusivity; safety=0.8)
     validate_timestep_inputs(max_speed,dx,diffusivity,safety)
-    # TODO(N04): 合成条件から刻みを返す。
-    error("未実装 N04: stable_timestep")
+    rate=max_speed/dx+2*(diffusivity/dx)/dx
+    return checked_timestep(safety/rate)
 end
 
 """u_oldから周期全点の次の値を計算し、u_newへ書き込む。"""
@@ -31,8 +29,12 @@ function advection_diffusion_step!(u_new,u_old,dt,dx,diffusivity;
     model=SELECTED_MODEL,advection=true,speed=1.0)
     validate_step(u_new,u_old,dt,dx,diffusivity,model,advection,speed)
     for i in eachindex(u_old)
-        # TODO(N04): 周期の左右隣接を使い、移流と拡散を同じ旧配列から足す。
-        error("未実装 N04: advection_diffusion_step!")
+        left=i==firstindex(u_old) ? lastindex(u_old) : i-1
+        right=i==lastindex(u_old) ? firstindex(u_old) : i+1
+        advective_term=advection ?
+            (advective_flux(u_old[i];model,speed)-advective_flux(u_old[left];model,speed))/dx : 0.
+        diffusive_term=diffusivity*(u_old[right]-2u_old[i]+u_old[left])/(dx*dx)
+        u_new[i]=u_old[i]-dt*advective_term+dt*diffusive_term
     end
     return u_new
 end
