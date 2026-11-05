@@ -1,6 +1,7 @@
 # N02: 流束、周期左隣添字、流束差分のTODO 3か所を実装する。
 # 読む順: 流束 → 添字 → 1ステップ → 境界 → simulate → main。
 module N02NonlinearAdvection
+import ThermofluidExercise as Common
 include("provided_support.jl")
 export burgers_flux,
     periodic_left_index, nonlinear_upwind_step!, apply_boundary!, simulate, main
@@ -26,9 +27,8 @@ N02授業の保存形Burgers流束を、配列全体ではなく1点のスカラ
 有限性検証は提供済み。配布状態では検証後に未実装エラーで停止する。
 """
 function burgers_flux(u::Real)
-    isfinite(u) || throw(ArgumentError("流束の入力を有限値にしてください"))
     # TODO(N02): 保存形Burgers方程式の流束を返す。
-    return u^2 / 2
+    return Common.burgers_flux(u)
 end
 
 """
@@ -53,10 +53,8 @@ end
 入力検証は提供済み。N02の周期境界を参照する。配布状態では検証後に未実装エラーで停止する。
 """
 function periodic_left_index(i::Integer, n::Integer)
-    (i isa Bool || n isa Bool || n < 1 || !(1 <= i <= n)) &&
-        throw(ArgumentError("添字は1 <= i <= n、点数はn >= 1の整数です（Bool不可）"))
     # TODO(N02): 先頭の左隣が末尾になるようにする。
-    return i == 1 ? n : i - 1
+    return Common.periodic_left_index(i, n)
 end
 
 """
@@ -87,15 +85,8 @@ end
 function nonlinear_upwind_step!(u_new, u_old, dt::Real, dx::Real; boundary = :fixed)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     validate_step_inputs(u_new, u_old, dt, dx, boundary)
-    copyto!(u_new, u_old)
-    indices = boundary == :periodic ? (1:length(u_old)) : (2:(length(u_old) - 1))
-    for i in indices
-        left = boundary == :periodic ? periodic_left_index(i, length(u_old)) : i - 1
-        # TODO(N02): 古い値の流束の差で更新する。u_oldは変更しない。
-        u_new[i] = u_old[i] - dt / dx * (burgers_flux(u_old[i]) - burgers_flux(u_old[left]))
-    end
-    all(isfinite, u_new) || error("更新後に非有限値があります。更新式を確認してください")
-    return u_new
+    # TODO(N02): 古い値の流束の差で更新する。u_oldは変更しない。
+    return Common.N02.nonlinear_upwind_step!(u_new, u_old, dt, dx; boundary)
 end
 
 """
@@ -118,11 +109,7 @@ function apply_boundary!(u; boundary = :fixed)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     validate_boundary(boundary)
     length(u) >= 3 || throw(ArgumentError("境界配列には3点以上が必要です"))
-    if boundary == :fixed
-        u[1] = 1.0
-        u[end] = u[end - 1]
-    end
-    return u
+    return Common.N02.apply_boundary!(u; boundary)
 end
 
 """
@@ -168,9 +155,9 @@ function simulate(;
 
     # 安定上限と到達する時刻に合わせて時間刻みを決める。
     nominal_dt = cfl * dx / maximum(abs, u0)
-    steps = ceil(Int, t_final / nominal_dt)
-    dt = t_final / steps
-
+    timing = Common.fit_timestep(nominal_dt, t_final)
+    steps = timing.steps
+    dt = timing.dt
     # 初期値を保持し、更新に使う作業用配列を用意する。
     u_old = copy(u0)
     u_new = similar(u_old)

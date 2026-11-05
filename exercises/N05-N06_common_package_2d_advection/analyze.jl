@@ -24,7 +24,15 @@ function spatial_variance(u)
     # TODO(N06): 保存場の平均を使って空間分散を求める。
     # 段階実行の例外: 基本診断は保存し、diagnostics_complete=falseで未完成を示す。
     # 分散が完成するまで作図と必修完了検査は失敗する。
-    return nothing
+    u isa AbstractMatrix{<:Real} && !isempty(u) ||
+        throw(ArgumentError("uは空でない実数行列です"))
+    all(isfinite,u) || throw(ArgumentError("uは有限値である必要があります"))
+    mean_value=sum(u)/length(u)
+    variance=sum(abs2(value-mean_value) for value in u)/length(u)
+    result=Float64(variance)
+    isfinite(result) && result>=0 ||
+        throw(ArgumentError("空間分散は有限な非負値である必要があります"))
+    return result
 end
 
 """

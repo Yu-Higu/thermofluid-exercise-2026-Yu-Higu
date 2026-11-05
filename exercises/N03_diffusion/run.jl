@@ -3,7 +3,7 @@
 # 読む順: 初期条件 → 境界 → 1ステップ → 熱量 → simulate → main。
 # 入力検証・収束診断・描画・保存は provided_support.jl に配布済み。
 module N03Diffusion
-
+import ThermofluidExercise as Common
 include("provided_support.jl")
 
 export initial_condition, analytic_solution, apply_boundary!, diffusion_step!, thermal_content,
@@ -92,23 +92,13 @@ end
 
 断熱端を、旧温度と鏡映ゴースト点を用いて更新する処理を実装する。
 固定温度の処理は提供済み。
-配布時は、断熱条件を選ぶと `未実装 N03: apply_boundary!` のエラーで停止する。
+この入口は共通APIへ委譲し、固定温度・断熱境界の両方を更新する。
 """
-function apply_boundary!(u_new, u_old, r::Real; boundary = :fixed)
-    # 境界を書き込む前に、新旧配列と実効Fourier数を確認する。
-    validate_buffers(u_new, u_old, boundary)
-    positive_finite(r, "r")
-
+function apply_boundary!(u_new,u_old,r::Real;boundary=:fixed)
+    validate_buffers(u_new,u_old,boundary)
+    positive_finite(r,"r")
     # 境界条件に応じて両端だけを更新する。
-    if boundary == :fixed
-        u_new[1] = 0.0
-        u_new[end] = 0.0
-    else
-        u_new[1]=u_old[1] + 2.0*r*(u_old[2]-u_old[1])
-        u_new[end]=u_old[end] + 2.0*r*(u_old[end-1]-u_old[end])
-    end
-
-    return u_new
+    return Common.N03.apply_boundary!(u_new,u_old,r;boundary)
 end
 
 """
@@ -147,19 +137,9 @@ function diffusion_step!(
     for (value, name) in ((dt, "dt"), (dx, "dx"), (diffusivity, "diffusivity"))
         positive_finite(value, name)
     end
-
-    # 更新に使う実効Fourier数を求め、表現可能な正値か確認する。
-    r = diffusivity * dt / dx^2
-    positive_finite(r, "実効Fourier数")
-
-    # 内部点はすべて同じ旧配列から更新する。
-    for i in 2:length(u_old)-1
-        u_new[i] = u_old[i] + r*(u_old[i-1] - 2.0*u_old[i] + u_old[i+1])
-    end
-
-    # 内部点の後で両端を更新し、次時刻の温度配列を完成させる。
-    apply_boundary!(u_new, u_old, r; boundary)
-    return u_new
+    r=diffusivity*dt/dx^2
+    positive_finite(r,"実効Fourier数")
+    return Common.N03.diffusion_step!(u_new,u_old,dt,dx,diffusivity;boundary)
 end
 
 """
@@ -242,31 +222,24 @@ function simulate(;
         u0[1] = 0.
         u0[end] = 0.
     end
-
     # 指定Fourier数から刻みを求め、終了時刻へ整数ステップで到達させる。
-    nominal_dt = fo * dx^2 / diffusivity
-    positive_finite(nominal_dt, "nominal_dt")
-    count = t_final / nominal_dt
-    isfinite(count) && count < typemax(Int) ||
-        throw(ArgumentError("ステップ数が表現範囲を超えています"))
-    steps = max(1, ceil(Int, count))
-    dt = t_final / steps
-    effective_fo = diffusivity * dt / dx^2
-    positive_finite(effective_fo, "実効Fourier数")
-
+    nominal_dt=fo*dx^2/diffusivity
+    positive_finite(nominal_dt,"nominal_dt")
+    timing=Common.fit_timestep(nominal_dt,t_final)
+    steps=timing.steps
+    dt=timing.dt
+    effective_fo=diffusivity*dt/dx^2
+    positive_finite(effective_fo,"実効Fourier数")
     # 初期温度を保持し、時間更新用の独立した新旧バッファを用意する。
-    u_old = copy(u0)
-    u_new = similar(u_old)
-
+    u_old=copy(u0); u_new=similar(u_old)
     # 初期熱量と極値を記録し、熱量の時刻履歴を用意する。
-    initial_heat = thermal_content(u0, dx)
-    initial_minimum, initial_maximum = extrema(u0)
-    low, high = initial_minimum, initial_maximum
-    ensure_finite((initial_heat, low, high), 0, 0., effective_fo)
-    times = collect(range(0., t_final; length = steps + 1))
-    heat_history = Vector{Float64}(undef, steps + 1)
-    heat_history[1] = initial_heat
-
+    initial_heat=thermal_content(u0,dx)
+    initial_minimum,initial_maximum=extrema(u0)
+    low,high=initial_minimum,initial_maximum
+    ensure_finite((initial_heat,low,high),0,0.,effective_fo)
+    times=collect(range(0.,t_final;length=steps+1))
+    heat_history=Vector{Float64}(undef,steps+1)
+    heat_history[1]=initial_heat
     # 温度を進め、各時刻の熱量と計算全体の温度範囲を記録する。
     for step in 1:steps
         # 旧温度から次時刻の温度を求め、発散による非有限値を検出する。

@@ -2,6 +2,7 @@
 # 読む順: 流束 → 刻み → 1ステップ → simulate → main。入力検証・解析解・描画は提供済み。
 module N04AdvectionDiffusion
 const SELECTED_MODEL = :nonlinear
+import ThermofluidExercise as Common
 include("provided_support.jl")
 export SELECTED_MODEL,
     advective_flux,
@@ -51,8 +52,7 @@ end
 """C+2Foの合成安定条件を満たす刻み。"""
 function stable_timestep(max_speed,dx,diffusivity; safety=0.8)
     validate_timestep_inputs(max_speed,dx,diffusivity,safety)
-    rate=max_speed/dx+2*(diffusivity/dx)/dx
-    return checked_timestep(safety/rate)
+    return Common.N04.stable_timestep(max_speed,dx,diffusivity;safety)
 end
 
 """
@@ -85,6 +85,7 @@ end
 # 返り値
 
 実装後は全点を書き換えた `u_new`。旧配列を保持する。
+u_oldから周期全点の次の値を計算し、u_newへ書き込む。
 
 # 受講生のToDo
 
@@ -104,17 +105,9 @@ function advection_diffusion_step!(
 )
     # 計算や書込みの前に、入力条件をまとめて確認する。
     validate_step(u_new, u_old, dt, dx, diffusivity, model, advection, speed)
-    for i in eachindex(u_old)
-        left=i==firstindex(u_old) ? lastindex(u_old) : i-1
-        right=i==lastindex(u_old) ? firstindex(u_old) : i+1
-        advective_term=advection ?
-            (advective_flux(u_old[i];model,speed)-advective_flux(u_old[left];model,speed))/dx : 0.
-        diffusive_term=diffusivity*(u_old[right]-2u_old[i]+u_old[left])/(dx*dx)
-        u_new[i]=u_old[i]-dt*advective_term+dt*diffusive_term
-    end
-    return u_new
+    return Common.N04.advection_diffusion_step!(
+        u_new, u_old, dt, dx, diffusivity; model, advection, speed)
 end
-
 """
     simulate(;
         model = SELECTED_MODEL,
@@ -178,26 +171,22 @@ function simulate(;
         stability_numbers(a, dt, dx, diffusivity)
         nominal_dt = dt
     end
-    count = t_final / nominal_dt
-    isfinite(count) && count < typemax(Int) - 1 ||
-        throw(ArgumentError("ステップ数が表現範囲を超えています"))
-    steps = max(1, ceil(Int, count))
-    dt = t_final / steps
-    positive_finite(dt, "実効dt")
-    cfl, fo = stability_numbers(a, dt, dx, diffusivity)
-
+    timing=Common.fit_timestep(nominal_dt,t_final)
+    steps=timing.steps
+    dt=timing.dt
+    positive_finite(dt,"実効dt")
+    cfl,fo=stability_numbers(a,dt,dx,diffusivity)
     # 初期値を保持し、更新に使う作業用配列を用意する。
     u_old = copy(u0)
     u_new = similar(u_old)
-    times = collect(range(0., t_final; length = steps + 1))
-    integral_history = Vector{Float64}(undef, steps + 1)
+    times = collect(range(0.,t_final;length=steps+1))
+    integral_history = Vector{Float64}(undef,steps+1)
 
     # 初期値を基準にして、保存量や停止条件の診断を準備する。
     initial_integral = conserved_integral(u0, dx)
     integral_history[1] = initial_integral
     low, high = extrema(u0)
     max_cfl = cfl
-
     # 旧場から更新し、診断・境界処理を終えてから次の反復へ進む。
     for step in 1:steps
         a = maximum_speed(u_old, model, advection, speed)

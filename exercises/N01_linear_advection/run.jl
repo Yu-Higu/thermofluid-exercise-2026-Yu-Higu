@@ -5,6 +5,7 @@
 
 module N01LinearAdvection
 
+import ThermofluidExercise as Common
 include("provided_support.jl")
 
 export rectangular_initial_condition, apply_boundary!, upwind_step!, centered_step!
@@ -92,13 +93,8 @@ function upwind_step!(u_new, u_old, c::Real, dt::Real, dx::Real)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     validate_step_inputs(u_new, u_old, c, dt, dx)
     # courantは1ステップで進む格子幅の割合を表すCFL数です。
-    courant = c * dt / dx
     # copyto!で古い値を複製し、内部を更新する間も両端点の値を保ちます。
-    copyto!(u_new, u_old)
-    for i in 2:(length(u_old) - 1)
-        u_new[i] = u_old[i] - courant * (u_old[i] - u_old[i - 1])
-    end
-    return u_new
+    return Common.N01.upwind_step!(u_new, u_old, c, dt, dx)
 end
 
 """
@@ -130,13 +126,8 @@ function centered_step!(u_new, u_old, c::Real, dt::Real, dx::Real)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     validate_step_inputs(u_new, u_old, c, dt, dx)
     # courantは1ステップで進む格子幅の割合を表すCFL数です。
-    courant = c * dt / dx
     # copyto!で古い値を複製し、内部を更新する間も両端点の値を保ちます。
-    copyto!(u_new, u_old)
-    for i in 2:(length(u_old) - 1)
-        u_new[i] = u_old[i] - courant / 2 * (u_old[i + 1] - u_old[i - 1])
-    end
-    return u_new
+    return Common.N01.centered_step!(u_new, u_old, c, dt, dx)
 end
 
 # === 境界条件と時間発展の流れ ===
@@ -158,9 +149,7 @@ end
 function apply_boundary!(u::AbstractVector{<:Real}; left_value::Real = 1.0)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     validate_boundary_inputs(u, left_value)
-    u[1] = left_value
-    u[end] = u[end - 1]
-    return u
+    return Common.N01.apply_boundary!(u; left_value)
 end
 
 """
@@ -205,8 +194,9 @@ function simulate(;
 
     # 安定上限と到達する時刻に合わせて時間刻みを決める。
     nominal_dt = cfl * dx / c
-    steps = ceil(Int, t_final / nominal_dt)
-    dt = t_final / steps
+    timing = Common.fit_timestep(nominal_dt, t_final)
+    steps = timing.steps
+    dt = timing.dt
     actual_cfl = c * dt / dx
 
 
