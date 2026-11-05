@@ -1,3 +1,5 @@
+# N05/N06: 提供済みの必須テスト → 受講生が編集する自作テスト。必須の期待値は保持します。
+
 using Test, ThermofluidExercise
 @testset "N05 共通API" begin
     @test ThermofluidExercise.periodic_left_index(1,4)==4
@@ -80,10 +82,12 @@ include("N05.jl")
 end
 @testset "N05-N06 保存結果と出自" begin
     @test N0506OutputChecks.check_complete()
-    baseline=joinpath(@__DIR__,"results","N05","baseline.toml")
-    regression=joinpath(@__DIR__,"results","N05","regression.toml")
+    baseline = joinpath(@__DIR__, "results", "N05", "baseline.toml")
+    regression = joinpath(@__DIR__, "results", "N05", "regression.toml")
     @test isfile(baseline) && isfile(regression)
-    report=N0506OutputChecks.TOML.parsefile(regression)
-    @test report["baseline_sha256"]==N0506OutputChecks.file_sha(baseline)
-    @test report["code_sha256"]==N0506OutputChecks.N05Regression.code_hashes(normpath(joinpath(@__DIR__,"..","..")))
+    report = N0506OutputChecks.TOML.parsefile(regression)
+    @test report["baseline_sha256"] == N0506OutputChecks.file_sha(baseline)
+    @test report["code_sha256"] == N0506OutputChecks.N05Regression.code_hashes(
+        normpath(joinpath(@__DIR__, "..", "..")),
+    )
 end
