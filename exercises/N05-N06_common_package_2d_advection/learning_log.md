@@ -29,3 +29,9 @@
 - N05・N06それぞれの理解度チェックと振り返り：理解度チェック対話全文（`understanding-check-N05.txt`，`understanding-check-N06.txt`）をLETUSに提出済み．
 
 - 実行コマンド，テスト結果，成果物，未解決事項：`julia --startup-file=no --project=. exercises/N05-N06_common_package_2d_advection/run.jl`でN05回帰からN06の6出力まで一括生成ができることを確認．N05-N06テストはすべて成功（共通API21，N06配布済み10，自作保存量2・収束3・分散3，出力・出自4）．進捗連動テスト`julia --startup-file=no --project=. test/runtests.jl`も199件の共通検査とF01ーN05-N06を含めすべて成功．出力は`results/N05/`と`results/N06/`．
+
+## origin/main統合とPR競合解消
+
+- 統合元と解消方針：更新された`origin/main`（`40f06304b7d81fc8cf0e5dfc7029edc0747fc204`）を取り込み，N02-N04入口の共通API委譲，N06実装・設定・テストを保持して競合を解消した．既存の説明コメント・テストを残し，重複する更新処理は共通実装に一本化した．merge commitは`447727877cc7a9455f2c2188bbb10b0a843bc4d8`．
+- 再検証：`julia --startup-file=no --project=. exercises/N05-N06_common_package_2d_advection/N05.jl verify`成功．baseline SHA-256は`8873c5ea998f510c9761c79303aeed21f0bb40488f5cc31b1b584ab99a7cda57`のまま維持し，11,493個の浮動小数比較の最大差は0.0．更新後の`src/ThermofluidExercise.jl` SHA-256は`e5706ee4c0ef1199729e1fb620cba9d4de982d988c1eea8b27e11aec8dbaf577`．
+- 統合後の進捗連動テスト：`julia --startup-file=no --project=. test/runtests.jl`成功（共通199，F01 3，F02 10，F03-F04 16，N01 13，N02 25，N03 20，N04 15，N05-N06 43件）．

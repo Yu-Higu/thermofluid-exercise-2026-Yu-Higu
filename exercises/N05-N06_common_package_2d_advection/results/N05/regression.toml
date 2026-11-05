@@ -1,5 +1,5 @@
 baseline_sha256 = "8873c5ea998f510c9761c79303aeed21f0bb40488f5cc31b1b584ab99a7cda57"
-git_head = "76e395549a114377d92b46a6d682ecc3e959ef58"
+git_head = "447727877cc7a9455f2c2188bbb10b0a843bc4d8"
 schema_version = 1
 selected_model = "nonlinear"
 
