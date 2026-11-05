@@ -2,6 +2,7 @@
 # 読む順: 流束 → 刻み → 1ステップ → simulate → main。入力検証・解析解・描画は提供済み。
 module N04AdvectionDiffusion
 const SELECTED_MODEL = :nonlinear
+import ThermofluidExercise as Common
 include("provided_support.jl")
 export SELECTED_MODEL, advective_flux, stable_timestep, advection_diffusion_step!,
     initial_condition, analytic_solution, conserved_integral, simulate, main
@@ -20,23 +21,15 @@ end
 """C+2Foの合成安定条件を満たす刻み。"""
 function stable_timestep(max_speed,dx,diffusivity; safety=0.8)
     validate_timestep_inputs(max_speed,dx,diffusivity,safety)
-    rate=max_speed/dx+2*(diffusivity/dx)/dx
-    return checked_timestep(safety/rate)
+    return Common.N04.stable_timestep(max_speed,dx,diffusivity;safety)
 end
 
 """u_oldから周期全点の次の値を計算し、u_newへ書き込む。"""
 function advection_diffusion_step!(u_new,u_old,dt,dx,diffusivity;
     model=SELECTED_MODEL,advection=true,speed=1.0)
     validate_step(u_new,u_old,dt,dx,diffusivity,model,advection,speed)
-    for i in eachindex(u_old)
-        left=i==firstindex(u_old) ? lastindex(u_old) : i-1
-        right=i==lastindex(u_old) ? firstindex(u_old) : i+1
-        advective_term=advection ?
-            (advective_flux(u_old[i];model,speed)-advective_flux(u_old[left];model,speed))/dx : 0.
-        diffusive_term=diffusivity*(u_old[right]-2u_old[i]+u_old[left])/(dx*dx)
-        u_new[i]=u_old[i]-dt*advective_term+dt*diffusive_term
-    end
-    return u_new
+    return Common.N04.advection_diffusion_step!(
+        u_new,u_old,dt,dx,diffusivity;model,advection,speed)
 end
 
 """指定最終時刻まで計算し、初期・最終配列、積分履歴、全時刻の診断を返す。
@@ -56,10 +49,9 @@ function simulate(;model=SELECTED_MODEL,advection=true,nx=80,diffusivity=0.1,
         stability_numbers(a,dt,dx,diffusivity)
         nominal_dt=dt
     end
-    count=t_final/nominal_dt
-    isfinite(count) && count < typemax(Int)-1 || throw(ArgumentError("ステップ数が表現範囲を超えています"))
-    steps=max(1,ceil(Int,count))
-    dt=t_final/steps
+    timing=Common.fit_timestep(nominal_dt,t_final)
+    steps=timing.steps
+    dt=timing.dt
     positive_finite(dt,"実効dt")
     cfl,fo=stability_numbers(a,dt,dx,diffusivity)
     u_old=copy(u0); u_new=similar(u_old)

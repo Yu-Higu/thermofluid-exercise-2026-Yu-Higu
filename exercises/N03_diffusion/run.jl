@@ -1,6 +1,7 @@
 # N03: 内部点更新、断熱端更新、熱量積分のTODO 3か所を実装する。
 # 読む順: 初期条件 → 境界 → 1ステップ → 熱量 → simulate → main。
 module N03Diffusion
+import ThermofluidExercise as Common
 include("provided_support.jl")
 export initial_condition, analytic_solution, apply_boundary!, diffusion_step!, thermal_content,
     simulate, main, stability_experiment
@@ -29,14 +30,7 @@ end
 function apply_boundary!(u_new,u_old,r::Real;boundary=:fixed)
     validate_buffers(u_new,u_old,boundary)
     positive_finite(r,"r")
-    if boundary == :fixed
-        u_new[1]=0.0
-        u_new[end]=0.0
-    else
-        u_new[1]=u_old[1] + 2.0*r*(u_old[2]-u_old[1])
-        u_new[end]=u_old[end] + 2.0*r*(u_old[end-1]-u_old[end])
-    end
-    return u_new
+    return Common.N03.apply_boundary!(u_new,u_old,r;boundary)
 end
 
 """空間中心差分・陽Euler。境界もここで更新し、旧配列は変更しない。"""
@@ -47,11 +41,7 @@ function diffusion_step!(u_new,u_old,dt::Real,dx::Real,diffusivity::Real;boundar
     end
     r=diffusivity*dt/dx^2
     positive_finite(r,"実効Fourier数")
-    for i in 2:length(u_old)-1
-        u_new[i] = u_old[i] + r*(u_old[i-1] - 2.0*u_old[i] + u_old[i+1])
-    end
-    apply_boundary!(u_new,u_old,r;boundary)
-    return u_new
+    return Common.N03.diffusion_step!(u_new,u_old,dt,dx,diffusivity;boundary)
 end
 
 """端点に半分の重みを付けた無次元熱量H。"""
@@ -79,10 +69,9 @@ function simulate(;boundary=:fixed,nx::Integer=81,diffusivity::Real=0.1,
     end
     nominal_dt=fo*dx^2/diffusivity
     positive_finite(nominal_dt,"nominal_dt")
-    count=t_final/nominal_dt
-    isfinite(count) && count < typemax(Int) || throw(ArgumentError("ステップ数が表現範囲を超えています"))
-    steps=max(1,ceil(Int,count))
-    dt=t_final/steps
+    timing=Common.fit_timestep(nominal_dt,t_final)
+    steps=timing.steps
+    dt=timing.dt
     effective_fo=diffusivity*dt/dx^2
     positive_finite(effective_fo,"実効Fourier数")
     u_old=copy(u0); u_new=similar(u_old)

@@ -13,9 +13,12 @@ function stable_timestep(cx,cy,dx,dy;safety=0.8)
     speeds(cx,cy); positive(dx,"dx"); positive(dy,"dy"); positive(safety,"safety")
     safety<=1 && (cx>0 || cy>0) || throw(ArgumentError("safety<=1、少なくとも一方の速度は正です"))
     # TODO(N06): 方向別寄与を足した安定条件から刻みを求める。
-    dt = error("未実装 N06: stable_timestep")
+    rate=cx/dx+cy/dy
+    positive(rate,"合成CFL率")
+    dt=safety/rate
     positive(dt,"合成dt（表現範囲）")
-    result=Float64(dt); positive(result,"Float64の合成dt")
+    result=Float64(dt)
+    positive(result,"Float64の合成dt")
     return result
 end
 """u[i,j]はx[i],y[j]。周期全点を同じ旧行列から更新し、新旧は非alias。"""
@@ -27,7 +30,13 @@ function advection_step!(u_new,u_old,dt,dx,dy;cx=1.0,cy=0.5)
     all(isfinite,(Cx,Cy)) && Cx+Cy<=1+32eps(Float64) || throw(ArgumentError("合成CFL<=1を超えています: Cx=$Cx, Cy=$Cy"))
     nx,ny=size(u_old)
     # TODO(N06): 両方向の周期隣接と流束を使い、全点を旧配列だけから更新する。
-    error("未実装 N06: advection_step!")
+    for j in 1:ny, i in 1:nx
+        left=Common.periodic_left_index(i,nx)
+        below=Common.periodic_left_index(j,ny)
+        u_new[i,j]=u_old[i,j]-Cx*(u_old[i,j]-u_old[left,j])-
+            Cy*(u_old[i,j]-u_old[i,below])
+    end
+    all(isfinite,u_new) || error("更新後に非有限値があります")
     return u_new
 end
 end
