@@ -1,11 +1,11 @@
 # N07の更新API。境界とバッファの検証 → 面流束と温度更新 → 二成分Burgers更新の順に読みます。
-# 数値TODO 5か所を実装します。提供検証は書込み前に呼び、旧場を保持します。
+# 数値TODO 5か所を実装済みです。提供検証は書込み前に呼び、旧場を保持します。
 
 module N07
 import ..ThermofluidExercise as Common
 export thermal_stable_timestep,
     thermal_fluxes!, thermal_step!, burgers_stable_timestep, burgers_step!
-# 提供: 形状・境界・書込み前検証。数値処理はTODOで実装する。
+# 提供: 形状・境界・書込み前検証。数値処理は以下のAPIで実装する。
 """
     require(ok, msg)
 
@@ -384,18 +384,19 @@ end
 
 実装後は有限な正のFloat64。
 
-# 受講生のToDo
+# 受講生のToDo（実装済み）
 
 移流と拡散の寄与に、固定温度・流入境界の半セルの係数を含めた安定上限を使い、safetyを適用する。
 境界・係数の検証、全係数0の拒否と返却刻みの検証は提供済み。thermal_rateは上限の照合用である。
-[N07課題「温度の流束・更新・境界条件」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#discretization)の安定刻みを参照する。配布状態では刻みの未実装エラーで停止する。
+[N07課題「温度の流束・更新・境界条件」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#discretization)の安定刻みを参照する。
 """
 function thermal_stable_timestep(cx, cy, kappa, dx, dy, bc; safety = 0.8)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     thermal_parameters(cx, cy, kappa, dx, dy, bc; safety)
     require(thermal_rate(cx, cy, kappa, dx, dy, bc) > 0, "全係数0では刻みを決められません")
-    # TODO(N07): 半セル境界を含む合成上限から時間刻みを求める。
-    dt = error("未実装 N07: thermal_stable_timestep")
+    # TODO(N07、完了): 半セル境界を含む合成上限から時間刻みを求める。
+
+    dt = safety / thermal_rate(cx, cy, kappa, dx, dy, bc)
     checked_timestep(dt)
 end
 
@@ -423,18 +424,78 @@ x面の添字1とnx+1は西・東境界、y面の添字1とny+1は南・北境�
 
 実装後は書き換えたfluxes。正x・正y方向を正とし、旧温度Tは保持する。
 
-# 受講生のToDo
+# 受講生のToDo（実装済み）
 
 同じ旧温度から内部面・四境界面の移流と拡散を別々に求め、4配列の全要素へ書く。周期面の両端も確定する。
 入力・境界・バッファの検証は提供済み。境界値bcも保持する。[N07課題「温度の流束・更新・境界条件」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#discretization)の面位置と各境界の流束を参照する。
-配布状態では検証後に未実装エラーで停止する。
 """
 function thermal_fluxes!(fluxes, T, dx, dy; cx, cy, kappa, bc)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     thermal_parameters(cx, cy, kappa, dx, dy, bc)
     validate_fluxes(fluxes, T)
-    # TODO(N07): 正x・正y方向、移流と拡散を分けて全ての面へ書く。
-    error("未実装 N07: thermal_fluxes!")
+    # TODO(N07、完了): 正x・正y方向、移流と拡散を分けて全ての面へ書く。
+    nx, ny = size(T)
+
+    for j in 1:ny
+        for i in 2:nx
+            left, right = T[i - 1, j], T[i, j]
+            fluxes.adv_x[i, j] = Common.linear_flux(cx >= 0 ? left : right, cx)
+            fluxes.diff_x[i, j] = -kappa * (right - left) / dx
+        end
+
+        if bc.west.kind == :periodic
+            left, right = T[nx, j], T[1, j]
+            adv = Common.linear_flux(cx >= 0 ? left : right, cx)
+            diff = -kappa * (right - left) / dx
+            fluxes.adv_x[1, j] = fluxes.adv_x[nx + 1, j] = adv
+            fluxes.diff_x[1, j] = fluxes.diff_x[nx + 1, j] = diff
+        else
+            west = bc.west
+            fluxes.adv_x[1, j] =
+                Common.linear_flux(west.kind == :inflow ? west.value : T[1, j], cx)
+            fluxes.diff_x[1, j] =
+                west.kind in (:dirichlet, :inflow) ?
+                -kappa * (T[1, j] - west.value) / (dx / 2) : 0.
+
+            east = bc.east
+            fluxes.adv_x[nx + 1, j] =
+                Common.linear_flux(east.kind == :outflow ? T[nx, j] : east.value, cx)
+            fluxes.diff_x[nx + 1, j] =
+                east.kind == :dirichlet ?
+                -kappa * (east.value - T[nx, j]) / (dx / 2) : 0.
+        end
+    end
+
+    for i in 1:nx
+        for j in 2:ny
+            below, above = T[i, j - 1], T[i, j]
+            fluxes.adv_y[i, j] = Common.linear_flux(cy >= 0 ? below : above, cy)
+            fluxes.diff_y[i, j] = -kappa * (above - below) / dy
+        end
+
+        if bc.south.kind == :periodic
+            below, above = T[i, ny], T[i, 1]
+            adv = Common.linear_flux(cy >= 0 ? below : above, cy)
+            diff = -kappa * (above - below) / dy
+            fluxes.adv_y[i, 1] = fluxes.adv_y[i, ny + 1] = adv
+            fluxes.diff_y[i, 1] = fluxes.diff_y[i, ny + 1] = diff
+        else
+            south = bc.south
+            fluxes.adv_y[i, 1] =
+                Common.linear_flux(south.kind == :inflow ? south.value : T[i, 1], cy)
+            fluxes.diff_y[i, 1] =
+                south.kind in (:dirichlet, :inflow) ?
+                -kappa * (T[i, 1] - south.value) / (dy / 2) : 0.
+
+            north = bc.north
+            fluxes.adv_y[i, ny + 1] =
+                Common.linear_flux(north.kind == :outflow ? T[i, ny] : north.value, cy)
+            fluxes.diff_y[i, ny + 1] =
+                north.kind == :dirichlet ?
+                -kappa * (north.value - T[i, ny]) / (dy / 2) : 0.
+        end
+    end
+    require(all(a->all(isfinite, a), values(fluxes)), "面流束が有限値の範囲を超えています")
     fluxes
 end
 
@@ -464,17 +525,45 @@ advective,diffusiveはそれぞれwest,east,south,northを持つNamedTupleで、
 
 Common.validate_buffersを再利用し、同じ旧温度からthermal_fluxes!で面流束を一度構築して、全セルの新温度と辺別レートに使う。
 面流束は正x・正y向きだが、返すレートは流入を正とするため、東・北の符号を反転し、面の長さを含めて辺ごとに集計する。
-入力・境界・安定条件の検証は提供済み。Toldとbcを保持し、[N07課題「辺別熱輸送と熱収支」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#heat-budget)を参照する。配布状態では検証後に未実装エラーで停止する。
+入力・境界・安定条件の検証は提供済み。Toldとbcを保持し、[N07課題「辺別熱輸送と熱収支」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#heat-budget)を参照する。実装済み。入力・境界・バッファを検証し、旧温度を保持して結果を返す。
 """
 function thermal_step!(Tnew, Told, dt, dx, dy; cx, cy, kappa, bc)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     thermal_parameters(cx, cy, kappa, dx, dy, bc)
-    thermal_buffers(Tnew, Told)
+    Common.validate_buffers(Tnew, Told)
     positive(dt, "dt")
     rate = thermal_rate(cx, cy, kappa, dx, dy, bc)
     require(dt * rate <= 1 + 32eps(Float64), "温度の安定上限を超えています")
-    # TODO(N07): Common.validate_buffersも再利用し、同じ旧場の面流束を一度構築して更新と辺別レートに使う。
-    error("未実装 N07: thermal_step!")
+    # TODO(N07、完了): Common.validate_buffersも再利用し、同じ旧場の面流束を一度構築して更新と辺別レートに使う。
+    fluxes = flux_buffers(Told)
+    thermal_fluxes!(fluxes, Told, dx, dy; cx, cy, kappa, bc)
+    nx, ny = size(Told)
+    for j in 1:ny, i in 1:nx
+        xwest = fluxes.adv_x[i, j] + fluxes.diff_x[i, j]
+        xeast = fluxes.adv_x[i + 1, j] + fluxes.diff_x[i + 1, j]
+        ysouth = fluxes.adv_y[i, j] + fluxes.diff_y[i, j]
+        ynorth = fluxes.adv_y[i, j + 1] + fluxes.diff_y[i, j + 1]
+        Tnew[i, j] =
+            Told[i, j] - (dt / dx) * (xeast - xwest) - (dt / dy) * (ynorth - ysouth)
+    end
+    require(all(isfinite, Tnew), "更新後の温度が有限値の範囲を超えています")
+    advective = (;
+        west = sum(fluxes.adv_x[1, :]) * dy,
+        east = -sum(fluxes.adv_x[nx + 1, :]) * dy,
+        south = sum(fluxes.adv_y[:, 1]) * dx,
+        north = -sum(fluxes.adv_y[:, ny + 1]) * dx,
+    )
+    diffusive = (;
+        west = sum(fluxes.diff_x[1, :]) * dy,
+        east = -sum(fluxes.diff_x[nx + 1, :]) * dy,
+        south = sum(fluxes.diff_y[:, 1]) * dx,
+        north = -sum(fluxes.diff_y[:, ny + 1]) * dx,
+    )
+    require(
+        all(isfinite, (values(advective)..., values(diffusive)...)),
+        "辺別熱輸送が有限値の範囲を超えています",
+    )
+    (; temperature = Tnew, boundary_rates = (; advective, diffusive))
 end
 
 """
@@ -555,18 +644,18 @@ end
 
 実装後は正のFloat64。
 
-# 受講生のToDo
+# 受講生のToDo（実装済み）
 
 このステップの旧二成分速度の局所値と粘性から合成上限を求め、safetyを適用する。初期速度の上限を固定して使わない。
 旧行列・粘性・格子幅の検証、全速度・粘性0の拒否と返却刻みの検証は提供済み。u,vを保持する。
-[N07課題「Burgersの定式化」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#burgers-formulation)を参照する。配布状態では刻みの未実装エラーで停止する。
+[N07課題「Burgersの定式化」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#burgers-formulation)を参照する。
 """
 function burgers_stable_timestep(u, v, nu, dx, dy; safety = 0.8)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     burgers_parameters(u, v, nu, dx, dy; safety)
     require(burgers_rate(u, v, nu, dx, dy) > 0, "全速度・粘性0では刻みを決められません")
-    # TODO(N07): このステップの旧場の局所速度から合成刻みを決める。
-    dt = error("未実装 N07: burgers_stable_timestep")
+    # TODO(N07、完了): このステップの旧場の局所速度から合成刻みを決める。
+    dt = safety / burgers_rate(u, v, nu, dx, dy)
     checked_timestep(dt)
 end
 
@@ -592,25 +681,41 @@ end
 
 実装後は(;u=unew,v=vnew)。旧二成分場は変更しない。
 
-# 受講生のToDo
+# 受講生のToDo（実装済み）
 
 共通バッファ検証と周期左右隣接を再利用し、旧二成分の符号で各方向の風上を選び、拡散と合わせて両新成分の全点へ書く。
 二成分とも同じ旧uold,voldを読む。4配列は同じ記憶領域を共有せず、一方の新成分を他方の更新へ使わない。
-入力・独立性・安定条件の検証は提供済み。温度の面流束APIとは別の更新である。[N07課題「Burgersの定式化」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#burgers-formulation)を参照する。配布状態では検証後に未実装エラーで停止する。
+入力・独立性・安定条件の検証は提供済み。温度の面流束APIとは別の更新である。[N07課題「Burgersの定式化」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#burgers-formulation)を参照する。
 """
 function burgers_step!(unew, vnew, uold, vold, dt, dx, dy; nu)
     # 計算や書込みの前に、入力条件をまとめて確認する。
     burgers_parameters(uold, vold, nu, dx, dy)
-    thermal_buffers(unew, uold)
-    thermal_buffers(vnew, vold)
+    Common.validate_buffers(unew, uold)
+    Common.validate_buffers(vnew, vold)
     independent((unew, vnew, uold, vold))
     positive(dt, "dt")
     require(
         dt * burgers_rate(uold, vold, nu, dx, dy) <= 1 + 32eps(Float64),
         "Burgersの安定上限を超えています",
     )
-    # TODO(N07): Common.validate_buffersと周期添字を再利用し、正負風上と拡散で二成分を同じ旧場から更新する。
-    error("未実装 N07: burgers_step!")
+    # TODO(N07、完了): Common.validate_buffersと周期添字を再利用し、正負風上と拡散で二成分を同じ旧場から更新する。
+    nx, ny = size(uold)
+    for (new, old) in ((unew, uold), (vnew, vold))
+        for j in 1:ny, i in 1:nx
+            left = Common.periodic_left_index(i, nx)
+            right = Common.periodic_right_index(i, nx)
+            below = Common.periodic_left_index(j, ny)
+            above = Common.periodic_right_index(j, ny)
+            u, v, q = uold[i, j], vold[i, j], old[i, j]
+            dqdx = u >= 0 ? (q - old[left, j]) / dx : (old[right, j] - q) / dx
+            dqdy = v >= 0 ? (q - old[i, below]) / dy : (old[i, above] - q) / dy
+            laplacian =
+                (old[left, j] - 2q + old[right, j]) / dx ^ 2 +
+                (old[i, below] - 2q + old[i, above]) / dy ^ 2
+            new[i, j] = q - dt * (u * dqdx + v * dqdy) + dt * nu * laplacian
+        end
+    end
+    require(all(isfinite, unew) && all(isfinite, vnew), "更新後の速度が有限値の範囲を超えています")
     (; u = unew, v = vnew)
 end
 end
