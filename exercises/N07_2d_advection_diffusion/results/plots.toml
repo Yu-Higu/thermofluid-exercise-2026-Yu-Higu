@@ -1,0 +1,29 @@
+cases = ["channel_fixed", "channel_insulated", "closed_fixed", "closed_insulated", "comparison_advection", "comparison_combined", "comparison_diffusion", "periodic_advection", "periodic_burgers", "periodic_combined", "periodic_diffusion"]
+colormap = "viridis"
+display_grid = "n080x060"
+display_time = 1.0
+error_colormap = "RdBu"
+residual_display_scale = 1.0e-15
+run_id = "709d8b7f367c9133b1fff7bdc93aca8e"
+schema_version = 1
+source_summary_sha256 = "08f7bd722cd1235916ffb61f882716c801bbee5e6ee46203d43cc0bfa72845aa"
+task_id = "N07"
+temperature_color_limits = [0.0, 1.6]
+
+[burgers_error_limits]
+u = [-0.003120709613413597, 0.003120709613413597]
+v = [-0.002821664658212042, 0.002821664658212042]
+
+[burgers_field_limits]
+u = [0.5602331610483773, 0.6397668389516227]
+v = [-0.3198874603711935, -0.2801125396288065]
+
+[figure_sha256]
+"boundary_heat.png" = "19d74c0e0567819fcea0ef1fceff5a59c8208ebaf9514d847851afb86c5ac649"
+"burgers_fields.png" = "999a44902430b07de8432583aee54fe8c14d3bdf2aa84473fcc10cb09945d8c9"
+"convergence.png" = "6fab923246fd4a8aa6abc1540a76437277ff344e5faa2d670efb610d8e101007"
+"temperature_comparison.png" = "cd3673a6462b162bb14c70c0aaf5837e88a3c15cde5bc80b145dee6677cc6bd5"
+
+[source_sha256]
+"burgers.h5" = "6e4f92464f9f777d045e7a15784f8a521e5f567adfcb2a3437570128b86ecd25"
+"temperature.h5" = "1f679e683fc855d0d4767a333831e58ff7353857a7b3d7ba4014caa42b6e2557"

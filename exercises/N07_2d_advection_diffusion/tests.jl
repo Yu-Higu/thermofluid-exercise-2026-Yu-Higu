@@ -5,6 +5,7 @@ using Test, ThermofluidExercise
 const N = ThermofluidExercise.N07
 include("provided_support.jl")
 include("analyze.jl")
+include("simulate.jl")
 # 配布済みの必須テスト。自作欄と区別し、入力・期待値を保持する。
 @testset "N07 independent faces, half-cell walls and heat" begin
     a = Float64[1 2 4 3; 5 7 6 8; 9 10 12 11]
@@ -164,13 +165,126 @@ end
     )
 end
 @testset "N07 自作: 開境界2条件の辺別熱収支" begin
-    # TODO(自作): 複数ステップで辺別・移流/拡散別の積算、熱量変化、断熱壁を検証する。
-    # 入力と独立期待値、許容値の根拠を記す。公式出力は上書きしない。
-    @test false
+    # TODO(自作、完了): dx!=dyの非対称場で2壁条件を進め、独立な境界式と複数区間の収支を照合する。
+    # 積分は各stepのdt*rate、収支許容値は浮動小数丸めを見込み指定式を用いる。公式出力は上書きしない。
+    dx, dy, dt, cx, kappa = 0.4, 0.25, 0.002, 0.3, 0.04
+    initial = [
+        0.4 0.9 1.4
+        0.7 1.2 0.5
+        1.1 0.3 1.6
+        0.2 0.8 1.0
+    ]
+    times = [0., 0.02, 0.04]
+    for wall in (:dirichlet, :insulated)
+        bc = N.channel_boundaries(wall)
+        old = copy(initial)
+        new = similar(old)
+        first_step = N.thermal_step!(
+            new,
+            old,
+            dt,
+            dx,
+            dy;
+            cx,
+            cy = 0.,
+            kappa,
+            bc,
+        )
+        rates = first_step.boundary_rates
+        expected_advective = (
+            west = cx * length(old[1, :]) * dy,
+            east = -cx * sum(old[end, :]) * dy,
+            south = 0.,
+            north = 0.,
+        )
+        expected_diffusive = (
+            west = -kappa * sum(old[1, :] .- 1) * dy / (dx / 2),
+            east = 0.,
+            south = wall == :dirichlet ? -kappa * sum(old[:, 1]) * dx / (dy / 2) : 0.,
+            north = wall == :dirichlet ? -kappa * sum(old[:, end]) * dx / (dy / 2) : 0.,
+        )
+        @test collect(values(rates.advective))≈collect(values(expected_advective)) atol = 1e-14
+        @test collect(values(rates.diffusive))≈collect(values(expected_diffusive)) atol = 1e-14
+
+        heat = [dx * dy * sum(old)]
+        advective = zeros(4, length(times) - 1)
+        diffusive = zeros(4, length(times) - 1)
+        for interval in 1:(length(times) - 1)
+            for _ in 1:round(Int, (times[interval + 1] - times[interval]) / dt)
+                result = N.thermal_step!(
+                    new,
+                    old,
+                    dt,
+                    dx,
+                    dy;
+                    cx,
+                    cy = 0.,
+                    kappa,
+                    bc,
+                )
+                for (side_index, side) in enumerate(SIDES)
+                    advective[side_index, interval] +=
+                        dt * getproperty(result.boundary_rates.advective, Symbol(side))
+                    diffusive[side_index, interval] +=
+                        dt * getproperty(result.boundary_rates.diffusive, Symbol(side))
+                end
+                old, new = new, old
+            end
+            push!(heat, dx * dy * sum(old))
+        end
+        budget = N07Analysis.heat_budget(times, heat, advective, diffusive)
+        scale = 1e-12 * max(
+            1.,
+            abs(first(heat)),
+            sum(abs, advective) + sum(abs, diffusive),
+        )
+        @test budget.net_input≈vec(sum(advective; dims = 1) + sum(diffusive; dims = 1)) atol =
+            1e-14
+        @test heat .- first(heat)≈budget.cumulative_input atol = scale
+        @test maximum(abs, budget.residual) <= scale
+        wall == :insulated &&
+            @test all(iszero, diffusive[[3, 4], :])
+    end
 end
 @testset "N07 自作: 温度とBurgersの解析解収束" begin
-    # TODO(自作): 周期温度の拡散・合成と二成分Burgersを3格子で計算し、誤差と両区間の次数を検証する。
-    @test false
+    # TODO(自作、完了): 周期拡散・合成とBurgersを公式3格子で解析解と比較する。
+    # dx,dyを同時に半減し、拡散は2次、風上移流は1次の観測次数を確認する。
+    grids = ((40, 30), (80, 60), (160, 120))
+    for id in ("periodic_diffusion", "periodic_combined", "periodic_burgers")
+        errors = Float64[]
+        for (nx, ny) in grids
+            run = N07Simulation.simulate_case(id, nx, ny)
+            if id == "periodic_burgers"
+                u_exact, v_exact = exact_burgers(run["x"], run["y"], 1.)
+                error = sqrt(
+                    (
+                        sum(abs2, run["u"][:, :, end] - u_exact) +
+                        sum(abs2, run["v"][:, :, end] - v_exact)
+                    ) / length(u_exact),
+                )
+            else
+                exact = exact_temperature(run["x"], run["y"], 1., id)
+                error = sqrt(sum(abs2, run["temperature"][:, :, end] - exact) / length(exact))
+            end
+            push!(errors, error)
+        end
+        orders = log2.(errors[1:(end - 1)] ./ errors[2:end])
+        bounds = id == "periodic_diffusion" ? (1.8, 2.2) : (0.8, 1.2)
+        @test all(isfinite, errors)
+        @test all(diff(errors) .< 0)
+        @test all(bounds[1] .<= orders .<= bounds[2])
+    end
+    fixed_errors = Float64[]
+    for (nx, ny) in grids
+        run = N07Simulation.simulate_case("closed_fixed", nx, ny)
+        exact = exact_temperature(run["x"], run["y"], 1., "closed_fixed")
+        push!(
+            fixed_errors,
+            sqrt(sum(abs2, run["temperature"][:, :, end] - exact) / length(exact)),
+        )
+    end
+    @test all(isfinite, fixed_errors)
+    @test all(diff(fixed_errors) .< 0)
 end
 @testset "N07 保存結果と来歴" begin
     @test check_complete()

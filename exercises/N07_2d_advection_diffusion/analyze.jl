@@ -1,4 +1,4 @@
-# N07: 保存場読取り → 受講生の熱収支TODO → 診断保存。
+# N07: 保存場読取り → 熱収支解析 → 診断保存。
 
 module N07Analysis
 include("provided_support.jl")
@@ -22,16 +22,25 @@ include("provided_support.jl")
 実装後は `net_input(nt-1)`、`cumulative_input(nt)`、`residual(nt)` のNamedTuple。
 後二つの先頭は0。residualは初期熱量からの変化から累積流入を引いた列。
 
-# 受講生のToDo
+# 受講生のToDo（実装済み）
 
 保存区間ごとに4辺の移流・拡散積分を合計し、正味流入とその累積、初期熱量からの変化との差を再構成する。
 入力検証は提供済み。積分はsimulate.jlが各stepの辺別レート×刻みを保存区間に累積した値なので、ここで刻みを再び掛けない。
-[N07課題「辺別熱輸送と熱収支」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#heat-budget)を参照する。配布状態では検証後に未実装エラーで停止する。
+[N07課題「辺別熱輸送と熱収支」](https://t2lab-it.github.io/thermofluid-exercise-2026/assignments/N07.html#heat-budget)を参照する。
 """
 function heat_budget(time, heat, advective_integrals, diffusive_integrals)
     validate_budget(time, heat, advective_integrals, diffusive_integrals)
-    # TODO(N07): 各区間の正味流入、累積流入、初期熱量からの変化との差を求める。
-    error("未実装 N07: heat_budget")
+    # TODO(N07、完了): 各区間の正味流入、累積流入、初期熱量からの変化との差を求める。
+    net_input = vec(sum(advective_integrals; dims = 1) + sum(diffusive_integrals; dims = 1))
+    cumulative_input = vcat(0., cumsum(net_input))
+    residual = Float64.(heat) .- first(heat) .- cumulative_input
+    require(
+        all(isfinite, net_input) &&
+            all(isfinite, cumulative_input) &&
+            all(isfinite, residual),
+        "熱収支の計算結果が有限値の範囲を超えています",
+    )
+    (; net_input, cumulative_input, residual)
 end
 
 """
@@ -53,7 +62,7 @@ end
 
 # 返り値
 
-解析辞書。source_sha256を記録してsummary.tomlを復元付きで反映する。熱収支TODOの失敗では既存解析を保持する。
+解析辞書。source_sha256を記録してsummary.tomlを復元付きで反映する。熱収支の解析が失敗した場合は既存解析を保持する。
 """
 function main(;
     input_dir = DEFAULT_OUTPUT_DIR,
