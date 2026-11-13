@@ -88,11 +88,66 @@ else
     end
     @testset "自作1: 非対称小配列・両問題1 sweep・旧場・境界・f=0一致" begin
         # TODO: 手計算した入力と期待値を使い、配布済みassertionを保持して独自に検証する。
-        @test false
+        old = [Float64(2i ^ 2 + 3j ^ 2 + i * j) for i in 1:4, j in 1:5]
+        saved = copy(old)
+        f = fill(8., 4, 5)
+        saved_f = copy(f)
+        laplace = similar(old)
+        poisson = similar(old)
+        zero_source = zeros(4, 5)
+
+        @test E.laplace_jacobi_step!(laplace, old, 0.25, 0.5) === laplace
+        @test laplace[2:3, 2:4] ≈
+              [26.2 43.2 66.2; 38.2 56.2 80.2] atol = 1e-14 rtol = 0
+        @test laplace[1, :] == old[1, :] &&
+              laplace[end, :] == old[end, :] &&
+              laplace[:, 1] == old[:, 1] &&
+              laplace[:, end] == old[:, end]
+        @test old == saved
+
+        @test E.poisson_jacobi_step!(poisson, old, f, 0.25, 0.5) === poisson
+        @test poisson[2:3, 2:4] ≈
+              [26. 43. 66.; 38. 56. 80.] atol = 1e-14 rtol = 0
+        @test poisson[1, :] == old[1, :] &&
+              poisson[end, :] == old[end, :] &&
+              poisson[:, 1] == old[:, 1] &&
+              poisson[:, end] == old[:, end]
+        @test old == saved && f == saved_f
+
+        E.laplace_jacobi_step!(laplace, old, 0.25, 0.5)
+        E.poisson_jacobi_step!(poisson, old, zero_source, 0.25, 0.5)
+        @test laplace == poisson
     end
     @testset "自作2: 両問題の残差停止・解析解誤差・3格子の両区間収束" begin
         # TODO: LaplaceとPoissonの両方、p=log2(E_coarse/E_fine)を検証する。
-        @test false
+        for id in ("N08", "N09")
+            l2_errors = Float64[]
+            linf_errors = Float64[]
+            for (nx, ny) in OFFICIAL_GRIDS
+                p = problem(id, nx, ny)
+                result =
+                    id == "N08" ?
+                    E.solve_laplace(p.u0, p.g, p.dx, p.dy) :
+                    E.solve_poisson(p.u0, p.g, p.f, p.dx, p.dy)
+                @test result.converged
+                @test result.reason == :converged
+                @test result.residual_history[end] <= result.threshold
+                @test independent_residual(result.u, p.f, p.dx, p.dy) ≈
+                      result.residual_history[end] atol = 2e-11 rtol = 1e-5
+
+                error = result.u[2:(end - 1), 2:(end - 1)] -
+                        p.exact[2:(end - 1), 2:(end - 1)]
+                push!(l2_errors, sqrt(sum(abs2, error) / length(error)))
+                push!(linf_errors, maximum(abs, error))
+            end
+
+            l2_orders = log2.(l2_errors[1:(end - 1)] ./ l2_errors[2:end])
+            linf_orders = log2.(linf_errors[1:(end - 1)] ./ linf_errors[2:end])
+            @test all(diff(l2_errors) .< 0)
+            @test all(diff(linf_errors) .< 0)
+            @test all(order->1.8 <= order <= 2.2, l2_orders)
+            @test all(order->1.8 <= order <= 2.2, linf_orders)
+        end
     end
     @testset "公式12出力・来歴・容量" begin
         @test check_complete()
